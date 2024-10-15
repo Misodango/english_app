@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import StartScreen from '@/views/StartScreen.vue'
+import PlayScreen from '@/views/PlayScreen'
+import SettingScreen from '@/views/SettingScreen'
 
 const routes = [
   {
@@ -7,6 +9,16 @@ const routes = [
     name: 'Start',
     component: StartScreen
   },
+  {
+    path: '/play',
+    name: 'Play',
+    component: PlayScreen
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: SettingScreen
+  }
   // 他のルートをここに追加していきます
 ]
 
