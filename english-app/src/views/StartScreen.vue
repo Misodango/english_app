@@ -11,10 +11,7 @@
             <v-btn @click="startLesson" color="primary" block class="mt-2">
               レッスンを始める
             </v-btn>
-            <v-btn @click="viewProgress" color="secondary" block class="mt-2">
-              進捗を確認
-            </v-btn>
-            <v-btn @click="settings" color="success" block class="mt-2">
+            <v-btn @click="settings" color="secondary" block class="mt-2">
               設定
             </v-btn>
           </v-card-text>
@@ -29,13 +26,10 @@ export default {
   name: 'StartScreen',
   methods: {
     startLesson() {
-      console.log('レッスンを開始します')
-    },
-    viewProgress() {
-      console.log('進捗を確認します')
+      this.$router.push('/play')
     },
     settings() {
-      console.log('設定画面に移動します')
+      this.$router.push('/settings')
     }
   }
 }
