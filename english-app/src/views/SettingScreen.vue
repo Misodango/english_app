@@ -72,43 +72,69 @@ export default {
       return this.fileName.trim() !== '' &&
         this.sentences.length > 0 &&
         this.sentences.every(s => s.trim() !== '')
-    },
-
-    // エクスポート用のJSONデータを生成
-    exportData() {
-      const existingData = JSON.parse(localStorage.getItem('englishLessons') || '[]')
-      return {
-        lastUpdated: new Date().toISOString(),
-        units: existingData.map(lesson => ({
-          id: lesson.name.toLowerCase().replace(/\s+/g, '-'),
-          name: lesson.name,
-          createdAt: lesson.createdAt,
-          sentences: lesson.sentences
-        }))
-      }
     }
   },
   methods: {
-    // ... 既存のメソッドはそのまま残す ...
+    handleFileUpload() {
+      if (this.file) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const content = e.target.result
+          this.sentences = content.split('\n')
+            .filter(line => line.trim() !== '')
+            .map(line => line.trim())
 
-    async saveSentences() {
+          // ファイル名から拡張子を除いて単元名の初期値として設定
+          if (this.file.name) {
+            this.fileName = this.file.name.replace(/\.csv$/, '')
+          }
+        }
+        reader.readAsText(this.file)
+      }
+    },
+
+    addNewSentence() {
+      this.sentences.push('')
+    },
+
+    removeSentence(index) {
+      this.sentences.splice(index, 1)
+    },
+
+    validateSentence(sentence) {
+      // カンマ区切りの形式が正しいかチェック
+      const words = sentence.split(',')
+      return words.length >= 2 && words.every(word => word.trim() !== '')
+    },
+
+    saveSentences() {
       if (!this.isValidData) {
         this.message = '単元名と少なくとも1つの有効な問題が必要です。'
         this.messageType = 'error'
         return
       }
 
+      // 不正な形式の文章がないかチェック
+      const invalidSentences = this.sentences.filter(s => !this.validateSentence(s))
+      if (invalidSentences.length > 0) {
+        this.message = '正しくない形式の問題があります。カンマ区切りで入力してください。'
+        this.messageType = 'error'
+        return
+      }
+
       try {
-        // LocalStorageに保存
+        // localStorageに保存
         const data = {
           name: this.fileName,
           sentences: this.sentences,
           createdAt: new Date().toISOString()
         }
 
+        // 既存のデータを取得
         const existingData = JSON.parse(localStorage.getItem('englishLessons') || '[]')
-        const index = existingData.findIndex(lesson => lesson.name === this.fileName)
 
+        // 同じ名前の単元があれば更新、なければ追加
+        const index = existingData.findIndex(lesson => lesson.name === this.fileName)
         if (index !== -1) {
           existingData[index] = data
         } else {
@@ -117,86 +143,18 @@ export default {
 
         localStorage.setItem('englishLessons', JSON.stringify(existingData))
 
-        // JSONファイルとしてエクスポート
-        await this.exportToJson()
-
-        this.message = '文章が正常に保存され、JSONファイルが生成されました。'
+        this.message = '文章が正常に保存されました。'
         this.messageType = 'success'
       } catch (error) {
         this.message = '保存中にエラーが発生しました。'
         this.messageType = 'error'
         console.error('保存エラー:', error)
       }
-    },
-
-    async exportToJson() {
-      const jsonString = JSON.stringify(this.exportData, null, 2)
-      const blob = new Blob([jsonString], { type: 'application/json' })
-
-      // ダウンロード用のリンクを作成
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = 'english-lessons.json'
-
-      // ダウンロードを実行
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-
-      // GitHub APIを使用してリポジトリを更新する場合の実装
-      if (process.env.VUE_APP_GITHUB_TOKEN) {
-        try {
-          const response = await fetch(
-            `https://api.github.com/repos/${process.env.VUE_APP_GITHUB_OWNER}/${process.env.VUE_APP_GITHUB_REPO}/contents/data/english-lessons.json`,
-            {
-              method: 'PUT',
-              headers: {
-                Authorization: `token ${process.env.VUE_APP_GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                message: `Update english lessons data - ${new Date().toISOString()}`,
-                content: btoa(jsonString),
-                sha: await this.getCurrentFileSha()
-              })
-            }
-          )
-
-          if (!response.ok) {
-            throw new Error('GitHub APIの更新に失敗しました')
-          }
-        } catch (error) {
-          console.error('GitHub API エラー:', error)
-          // エラーは表示するがプロセスは続行
-        }
-      }
-    },
-
-    async getCurrentFileSha() {
-      try {
-        const response = await fetch(
-          `https://api.github.com/repos/${process.env.VUE_APP_GITHUB_OWNER}/${process.env.VUE_APP_GITHUB_REPO}/contents/data/english-lessons.json`,
-          {
-            headers: {
-              Authorization: `token ${process.env.VUE_APP_GITHUB_TOKEN}`
-            }
-          }
-        )
-
-        if (response.ok) {
-          const data = await response.json()
-          return data.sha
-        }
-        return null
-      } catch (error) {
-        return null
-      }
     }
   }
 }
 </script>
+
 <style scoped>
 .sentences-list {
   max-height: 60vh;
