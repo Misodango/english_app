@@ -3,6 +3,5 @@ module.exports = defineConfig({
   transpileDependencies: true
 })
 module.exports = {
-  publicPath: './'
-  // publicPath: '/english_app/'
+  publicPath: '/english_app/'
 }
