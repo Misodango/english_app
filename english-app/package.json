@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "@nextui-org/react": "^2.4.8",
     "core-js": "^3.8.3",
     "framer-motion": "^11.11.8",
