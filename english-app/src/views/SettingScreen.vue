@@ -56,6 +56,9 @@
 </template>
 
 <script>
+import { db } from '../firebase/init'
+import { collection, addDoc, query, getDocs, where, updateDoc } from 'firebase/firestore'
+
 export default {
   name: 'SettingsScreen',
   data() {
@@ -107,41 +110,32 @@ export default {
       return words.length >= 2 && words.every(word => word.trim() !== '')
     },
 
-    saveSentences() {
+    async saveSentences() {
       if (!this.isValidData) {
         this.message = '単元名と少なくとも1つの有効な問題が必要です。'
         this.messageType = 'error'
         return
       }
 
-      // 不正な形式の文章がないかチェック
-      const invalidSentences = this.sentences.filter(s => !this.validateSentence(s))
-      if (invalidSentences.length > 0) {
-        this.message = '正しくない形式の問題があります。カンマ区切りで入力してください。'
-        this.messageType = 'error'
-        return
-      }
-
       try {
-        // localStorageに保存
-        const data = {
+        const lessonsRef = collection(db, 'lessons')
+        const q = query(lessonsRef, where("name", "==", this.fileName))
+        const querySnapshot = await getDocs(q)
+
+        const lessonData = {
           name: this.fileName,
           sentences: this.sentences,
           createdAt: new Date().toISOString()
         }
 
-        // 既存のデータを取得
-        const existingData = JSON.parse(localStorage.getItem('englishLessons') || '[]')
-
-        // 同じ名前の単元があれば更新、なければ追加
-        const index = existingData.findIndex(lesson => lesson.name === this.fileName)
-        if (index !== -1) {
-          existingData[index] = data
+        if (querySnapshot.empty) {
+          // 新規作成
+          await addDoc(lessonsRef, lessonData)
         } else {
-          existingData.push(data)
+          // 更新
+          const docRef = querySnapshot.docs[0].ref
+          await updateDoc(docRef, lessonData)
         }
-
-        localStorage.setItem('englishLessons', JSON.stringify(existingData))
 
         this.message = '文章が正常に保存されました。'
         this.messageType = 'success'
