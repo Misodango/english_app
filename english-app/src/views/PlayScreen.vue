@@ -1,6 +1,10 @@
 <template>
   <v-container>
     <h1>プレイ画面</h1>
+    <!-- 単元選択 -->
+    <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択" class="mb-4"
+      @update:model-value="onLessonSelect"></v-select>
+
     <v-card v-if="currentSentence">
       <v-card-title>文章を正しく並べ替えてください</v-card-title>
       <v-card-text>
@@ -58,10 +62,16 @@
 </template>
 
 <script>
+import { db } from '../firebase/init'
+import { collection, getDocs } from 'firebase/firestore'
+
+
 export default {
   name: 'PlayScreen',
   data() {
     return {
+      lessons: [],
+      selectedLesson: null,
       sentences: [],
       currentSentence: null,
       shuffledWords: [],
@@ -70,19 +80,38 @@ export default {
       feedbackType: 'info'
     }
   },
-  mounted() {
+  async mounted() {
+    await this.loadLessons()
     this.loadSentences()
   },
   methods: {
+    async loadLessons() {
+      try {
+        const lessonsRef = collection(db, 'lessons')
+        const querySnapshot = await getDocs(lessonsRef)
+        this.lessons = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      } catch (error) {
+        console.error('Lessons読み込みエラー:', error)
+      }
+    },
+    onLessonSelect() {
+      const lesson = this.lessons.find(l => l.id === this.selectedLesson)
+      if (lesson) {
+        this.sentences = [...lesson.sentences]
+        this.nextSentence()
+      }
+    },
     loadSentences() {
-      // ここでCSVから文章を読み込む処理を実装
-      // 仮のデータを使用
-      this.sentences = [
-        'I,play,the,guitar,.',
-        'She,likes,to,sing,songs,.',
-        'They,are,studying,English,.'
-      ]
-      this.nextSentence()
+      // Firestoreから読み込んだデータを使用
+      if (this.lessons.length > 0) {
+        // 例：最新の単元を使用
+        const latestLesson = this.lessons[this.lessons.length - 1]
+        this.sentences = [...latestLesson.sentences]
+        this.nextSentence()
+      }
     },
     nextSentence() {
       if (this.sentences.length > 0) {
