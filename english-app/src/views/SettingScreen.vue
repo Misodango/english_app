@@ -28,21 +28,25 @@
             <!-- プレビュー表示 -->
             <div class="preview-chips ml-8 mt-2">
               <v-chip v-for="(word, wordIndex) in sentence.split(',')" :key="wordIndex" size="small" class="ma-1"
-                color="primary" variant="outlined">
-                {{ word }}
+                :style="getChipStyle(word.trim(), index)" variant="tonal" @click="changeChipColor(word.trim(), index)">
+                {{ word.trim() }}
               </v-chip>
             </div>
           </div>
         </div>
       </v-card-text>
-
       <v-card-actions>
         <v-btn prepend-icon="mdi-plus" variant="tonal" @click="addNewSentence" class="mr-2">
           新しい問題を追加
         </v-btn>
 
+        <v-btn prepend-icon="mdi-content-cut" variant="tonal" @click="extractSVOC" class="mr-2" :loading="isProcessing"
+          :disabled="isProcessing || !isValidData">
+          品詞分解
+        </v-btn>
+
         <v-spacer></v-spacer>
-        <v-btn prepend-icon="mdi-check" color="primary" @click="saveSentences" :disabled="!isValidData">
+        <v-btn prepend-icon="mdi-check" variant="tonal" color="primary" @click="saveSentences" :disabled="!isValidData">
           保存
         </v-btn>
       </v-card-actions>
@@ -58,16 +62,36 @@
 <script>
 import { db } from '../firebase/init'
 import { collection, addDoc, query, getDocs, where, updateDoc } from 'firebase/firestore'
+import axios from 'axios'
 
 export default {
   name: 'SettingsScreen',
   data() {
     return {
       file: null,
-      sentences: [],
+      sentences: [], // 元の文章（カンマ区切り）
+      analyzedSentences: [], // 解析結果を保持
+      wordColors: [], // 各単語の色情報を保持
       message: '',
       messageType: 'info',
-      fileName: ''
+      fileName: '',
+      isProcessing: false,
+      colorScheme: {
+        subject: '#FFEB3B', // 黄色
+        verb: '#A5D6A7', // 緑
+        object: '#90CAF9', // 青
+        complement: '#FF9800', // オレンジ
+        other: '#E0E0E0' // その他（グレー）
+      },
+      apiConfig: {
+        baseURL: 'https://english-app-serverside.onrender.com',
+        timeout: 500000000,
+        headers: {
+          'Content-Type': 'application/json',
+          // CORSプリフライトリクエストのための追加ヘッダー
+          'Accept': 'application/json'
+        }
+      }
     }
   },
   computed: {
@@ -78,6 +102,69 @@ export default {
     }
   },
   methods: {
+    getWordType(word, analysis) {
+      if (analysis.subject.includes(word)) return 'subject'
+      if (analysis.verb.includes(word)) return 'verb'
+      if (analysis.object.includes(word)) return 'object'
+      if (analysis.complement.includes(word)) return 'complement'
+      return 'other'
+    },
+    getWordColor(word, index) {
+      return this.wordColors[index]?.[word] || this.colorScheme.other
+    },
+
+    getChipStyle(word, sentenceIndex) {
+      const backgroundColor = this.wordColors[sentenceIndex]?.[word] || this.colorScheme.other;
+      // バックグラウンドを薄く、テキストを濃く
+      return {
+        backgroundColor: backgroundColor,
+        color: this.getContrastColor(backgroundColor),
+        borderColor: backgroundColor,
+      }
+    },
+
+    changeChipColor(word, sentenceIndex) {
+      // 安全に初期化
+      if (!this.wordColors[sentenceIndex]) {
+        this.wordColors[sentenceIndex] = {};
+      }
+
+      // 現在の色を取得（見つからない場合は "other" の色を使う）
+      const currentValue = this.wordColors[sentenceIndex]?.[word] || this.colorScheme.other;
+
+      // 現在の色に対応するキーをすべて取得（重複色にも対応）
+      const matchingKeys = Object.keys(this.colorScheme).filter(
+        (key) => this.colorScheme[key] === currentValue
+      );
+
+      // 複数のキーが見つかった場合は、その中の1つを選ぶ（先頭を使用）
+      const currentKey = matchingKeys[0];
+
+      const keys = Object.keys(this.colorScheme); // 全てのキーを取得
+      const currentIndex = keys.indexOf(currentKey); // 現在のインデックスを取得
+
+      // 次のインデックスを計算（循環するように）
+      const nextIndex = (currentIndex + 1) % keys.length;
+
+      // 次の色を設定
+      this.wordColors[sentenceIndex][word] = this.colorScheme[keys[nextIndex]];
+
+      console.log(`Word: ${word}, Current Key: ${currentKey}, Next Key: ${keys[nextIndex]}`);
+    },
+
+    getContrastColor(hexColor) {
+      // カラーコードをRGBに変換
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+
+      // 輝度を計算
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+      // 明るい背景には暗いテキスト、暗い背景には明るいテキスト
+      return brightness > 128 ? '#000000' : '#FFFFFF';
+    },
+
     handleFileUpload() {
       if (this.file) {
         const reader = new FileReader()
@@ -110,12 +197,88 @@ export default {
       return words.length >= 2 && words.every(word => word.trim() !== '')
     },
 
+    async extractSVOC() {
+      if (!this.isValidData) {
+        this.showMessage('単元名と少なくとも1つの有効な問題が必要です。', 'error')
+        return
+      }
+
+      this.isProcessing = true
+      this.showMessage('文章を解析中です...', 'info')
+
+      try {
+        this.analyzedSentences = []
+        this.wordColors = []
+
+        const api = axios.create({
+          baseURL: 'https://english-app-serverside.onrender.com',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          // renderのサーバーは応答が遅いため、タイムアウトを長めに設定
+          timeout: 30000
+        })
+
+        for (let i = 0; i < this.sentences.length; i++) {
+          const sentence = this.sentences[i]
+          const words = sentence.split(',')
+          const wholeSentence = words.join(' ').trim()
+
+          if (!wholeSentence) continue
+
+          try {
+            const response = await api.post('/analyze', {
+              text: wholeSentence
+            })
+
+            if (response.data) {
+              this.analyzedSentences[i] = response.data
+              const colors = {}
+              words.forEach(word => {
+                const cleanWord = word.trim()
+                const wordType = this.getWordType(cleanWord, response.data)
+                colors[cleanWord] = this.colorScheme[wordType]
+              })
+              this.wordColors[i] = colors
+            }
+
+          } catch (error) {
+            console.error(`文章${i + 1}の解析中にエラー:`, error)
+            if (axios.isAxiosError(error)) {
+              if (error.code === 'ECONNABORTED') {
+                throw new Error('サーバーの応答がタイムアウトしました。しばらく待ってから再試行してください。')
+              }
+              if (error.response) {
+                throw new Error(`サーバーエラー: ${error.response.status} - ${error.response.data?.error || '不明なエラー'}`)
+              }
+              if (error.request) {
+                throw new Error('サーバーに接続できません。インターネット接続を確認してください。')
+              }
+            }
+            throw error
+          }
+        }
+
+        this.showMessage('解析が完了しました。', 'success')
+        console.log(this.analyzedSentences)
+        console.log(this.wordColors)
+      } catch (error) {
+        this.showMessage(`解析中にエラーが発生しました: ${error.message}`, 'error')
+        console.error('SVOC解析エラー:', error)
+      } finally {
+        this.isProcessing = false
+      }
+    },
+
     async saveSentences() {
       if (!this.isValidData) {
         this.message = '単元名と少なくとも1つの有効な問題が必要です。'
         this.messageType = 'error'
         return
       }
+
+      this.isProcessing = true
+      this.showMessage('文章を保存中です...', 'info')
 
       try {
         const lessonsRef = collection(db, 'lessons')
@@ -125,14 +288,14 @@ export default {
         const lessonData = {
           name: this.fileName,
           sentences: this.sentences,
+          analyzedSentences: this.analyzedSentences,
+          wordColors: this.wordColors,
           createdAt: new Date().toISOString()
         }
 
         if (querySnapshot.empty) {
-          // 新規作成
           await addDoc(lessonsRef, lessonData)
         } else {
-          // 更新
           const docRef = querySnapshot.docs[0].ref
           await updateDoc(docRef, lessonData)
         }
@@ -144,6 +307,10 @@ export default {
         this.messageType = 'error'
         console.error('保存エラー:', error)
       }
+    },
+    showMessage(text, type = 'info') {
+      this.message = text
+      this.messageType = type
     }
   }
 }

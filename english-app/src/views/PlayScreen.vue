@@ -9,7 +9,8 @@
       <v-card-title>文章を正しく並べ替えてください</v-card-title>
       <v-card-text>
         <v-chip-group v-model="selectedWords" column multiple>
-          <v-chip v-for="word in shuffledWords" :key="word" :value="word">
+          <v-chip v-for="word in shuffledWords" :key="word" :value="word"
+                 :style="getChipStyle(word.trim(), currentIndex)" variant="tonal">
             {{ word }}
           </v-chip>
         </v-chip-group>
@@ -18,7 +19,8 @@
       <v-card>あなたの回答</v-card>
       <v-card-text>
         <v-chip-group column multiple>
-          <v-chip v-for="word in selectedWords" :key="word" :value="word">
+          <v-chip v-for="word in selectedWords" :key="word" :value="word"
+                 :style="getChipStyle(word.trim(), currentIndex)" variant="tonal">
             {{ word }}
           </v-chip>
         </v-chip-group>
@@ -42,21 +44,18 @@
     </v-alert>
 
     <div v-if="currentSentence">
-
       <div v-if="isCorrect() && feedbackType === 'success'">
         <div v-if="isEnd()">
           <v-btn @click="startScreen">
             <p>終了</p>
           </v-btn>
         </div>
-
         <div v-else>
           <v-btn @click="nextSentence" color="secondary" class="mt-4">
             <p>次の問題</p>
           </v-btn>
         </div>
       </div>
-
     </div>
   </v-container>
 </template>
@@ -64,7 +63,6 @@
 <script>
 import { db } from '../firebase/init'
 import { collection, getDocs } from 'firebase/firestore'
-
 
 export default {
   name: 'PlayScreen',
@@ -74,10 +72,19 @@ export default {
       selectedLesson: null,
       sentences: [],
       currentSentence: null,
+      currentIndex: 0,
+      wordColors: [],
       shuffledWords: [],
       selectedWords: [],
       feedback: '',
-      feedbackType: 'info'
+      feedbackType: 'info',
+      colorScheme: {
+        subject: '#FFF59D', // 黄色
+        verb: '#A5D6A7', // 緑
+        object: '#90CAF9', // 青
+        complement: '#A5D6A7', // 緑
+        other: '#E0E0E0' // その他（グレー）
+      },
     }
   },
   async mounted() {
@@ -85,6 +92,23 @@ export default {
     this.loadSentences()
   },
   methods: {
+    getChipStyle(word, sentenceIndex) {
+      const backgroundColor = this.wordColors[sentenceIndex]?.[word] || this.colorScheme.other;
+      return {
+        backgroundColor: backgroundColor,
+        color: this.getContrastColor(backgroundColor),
+        borderColor: backgroundColor,
+      }
+    },
+
+    getContrastColor(hexColor) {
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 128 ? '#000000' : '#FFFFFF';
+    },
+
     async loadLessons() {
       try {
         const lessonsRef = collection(db, 'lessons')
@@ -97,22 +121,27 @@ export default {
         console.error('Lessons読み込みエラー:', error)
       }
     },
+
     onLessonSelect() {
       const lesson = this.lessons.find(l => l.id === this.selectedLesson)
       if (lesson) {
         this.sentences = [...lesson.sentences]
+        this.wordColors = [...lesson.wordColors]
+        this.currentIndex = 0
         this.nextSentence()
       }
     },
+
     loadSentences() {
-      // Firestoreから読み込んだデータを使用
       if (this.lessons.length > 0) {
-        // 例：最新の単元を使用
         const latestLesson = this.lessons[this.lessons.length - 1]
         this.sentences = [...latestLesson.sentences]
+        this.wordColors = [...latestLesson.wordColors]
+        this.currentIndex = 0
         this.nextSentence()
       }
     },
+
     nextSentence() {
       if (this.sentences.length > 0) {
         this.currentSentence = this.sentences.pop()
@@ -120,12 +149,14 @@ export default {
         this.selectedWords = []
         this.feedback = ''
         this.feedbackType = 'info'
+        this.currentIndex = this.sentences.length
       } else {
         this.currentSentence = null
         this.feedback = 'すべての問題が終了しました。'
         this.feedbackType = 'success'
       }
     },
+
     shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -133,11 +164,13 @@ export default {
       }
       return array
     },
+
     isCorrect() {
       const correctAnswer = this.currentSentence.split(',').join(' ')
       const userAnswer = this.selectedWords.join(' ')
       return correctAnswer === userAnswer
     },
+
     checkAnswer() {
       if (this.isCorrect()) {
         this.feedback = '正解です！'
@@ -147,17 +180,21 @@ export default {
         this.feedbackType = 'error'
       }
     },
+
     checkLength() {
       const correctAnswer = this.currentSentence.split(',').join(' ')
       const userAnswer = this.selectedWords.join(' ')
       return (userAnswer.length == correctAnswer.length)
     },
+
     popString() {
       this.selectedWords.pop()
     },
+
     isEnd() {
       return this.sentences.length === 0
     },
+
     startScreen() {
       this.$router.push('/')
     }
