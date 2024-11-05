@@ -1,20 +1,12 @@
 <template>
   <v-container>
-    <h1>レッスンを始めよう</h1>
-    <v-divider></v-divider>
+    <h1>プレイ画面</h1>
 
-    <!-- 単元選択 (選択後ロック) -->
-    <h2 v-if="!gameStarted">まずは単元を選択しよう</h2>
-
+    <!-- 単元選択 -->
     <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択" class="mb-4"
-      @update:model-value="onLessonSelect" :disabled="gameStarted">
-    </v-select>
+      @update:model-value="onLessonSelect" :disabled="gameStarted"></v-select>
 
-    <v-btn v-if="selectedLesson && !gameStarted" @click="startGame" color="primary">
-      ゲームスタート
-    </v-btn>
-
-    <v-card v-if="currentSentence && gameStarted">
+    <v-card v-if="currentSentence">
       <v-card-title>文章を正しく並べ替えてください</v-card-title>
       <v-card-text>
         <v-chip-group v-model="selectedWords" column multiple>
@@ -56,8 +48,19 @@
       {{ feedback }}
     </v-alert>
 
-    <div v-if="gameEnded">
-      <v-btn @click="resetGame" color="primary">もう一度プレイ</v-btn>
+    <div v-if="currentSentence">
+      <div v-if="isCorrect() && feedbackType === 'success'">
+        <div v-if="isEnd()">
+          <v-btn @click="startScreen">
+            <p>終了</p>
+          </v-btn>
+        </div>
+        <div v-else>
+          <v-btn @click="nextSentence" color="secondary" class="mt-4">
+            <p>次の問題</p>
+          </v-btn>
+        </div>
+      </div>
     </div>
   </v-container>
 </template>
@@ -80,21 +83,18 @@ export default {
       selectedWords: [],
       feedback: '',
       feedbackType: 'info',
-      gameStarted: false,
-      gameEnded: false,
-      startTime: 0,
-      elapsedTime: 0,
       colorScheme: {
-        subject: '#FFF59D',
-        verb: '#A5D6A7',
-        object: '#90CAF9',
-        complement: '#A5D6A7',
-        other: '#E0E0E0'
+        subject: '#FFF59D', // 黄色
+        verb: '#A5D6A7', // 緑
+        object: '#90CAF9', // 青
+        complement: '#A5D6A7', // 緑
+        other: '#E0E0E0' // その他（グレー）
       },
     }
   },
   async mounted() {
     await this.loadLessons()
+    this.loadSentences()
   },
   methods: {
     getChipStyle(word, sentenceIndex) {
@@ -132,13 +132,19 @@ export default {
       if (lesson) {
         this.sentences = [...lesson.sentences]
         this.wordColors = [...lesson.wordColors]
+        this.currentIndex = 0
+        this.nextSentence()
       }
     },
 
-    startGame() {
-      this.gameStarted = true
-      this.startTime = Date.now()
-      this.nextSentence()
+    loadSentences() {
+      if (this.lessons.length > 0) {
+        const latestLesson = this.lessons[this.lessons.length - 1]
+        this.sentences = [...latestLesson.sentences]
+        this.wordColors = [...latestLesson.wordColors]
+        this.currentIndex = 0
+        this.nextSentence()
+      }
     },
 
     nextSentence() {
@@ -150,29 +156,16 @@ export default {
         this.feedbackType = 'info'
         this.currentIndex = this.sentences.length
       } else {
-        this.endGame()
+        this.currentSentence = null
+        this.feedback = 'すべての問題が終了しました。'
+        this.feedbackType = 'success'
       }
-    },
-
-    endGame() {
-      this.gameEnded = true
-      this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000)
-      this.feedback = `すごい！${this.elapsedTime}秒で終了しました！`
-      this.feedbackType = 'success'
-    },
-
-    resetGame() {
-      this.gameStarted = false
-      this.gameEnded = false
-      this.selectedLesson = null
-      this.currentSentence = null
-      this.elapsedTime = 0
     },
 
     shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1))
-          ;[array[i], array[j]] = [array[j], array[i]]
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]
       }
       return array
     },
@@ -187,12 +180,12 @@ export default {
       if (this.isCorrect()) {
         this.feedback = '正解です！'
         this.feedbackType = 'success'
-        this.nextSentence()
       } else {
         this.feedback = `😣残念．．．もう一度やってみよう！😣`
         this.feedbackType = 'error'
       }
     },
+
     checkLength() {
       const correctAnswer = this.currentSentence.split(',').join(' ')
       const userAnswer = this.selectedWords.join(' ')
@@ -202,6 +195,14 @@ export default {
     popString() {
       this.selectedWords.pop()
     },
+
+    isEnd() {
+      return this.sentences.length === 0
+    },
+
+    startScreen() {
+      this.$router.push('/')
+    }
   }
 }
 </script>
