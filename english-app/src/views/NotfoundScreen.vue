@@ -5,7 +5,8 @@
         <v-card class="elevation-0 rounded-lg" style="background: rgba(255, 255, 255, 0.95)">
           <v-card-title class="text-h4 font-weight-bold text-center py-6"
             style="font-family: 'Noto Sans JP', sans-serif;">
-            このページは存在しないみたいです😣😣
+            😣NotFound😣
+            <div class="text-subtitle-1 mt-2 text-grey-darken-1">このページは存在しないみたいです</div>
             <div class="text-subtitle-1 mt-2 text-grey-darken-1">下のボタンから移動してください</div>
           </v-card-title>
           <v-card-text class="pa-6">
