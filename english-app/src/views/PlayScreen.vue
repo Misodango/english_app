@@ -24,7 +24,7 @@
       <v-card-text>
         <v-chip-group v-model="selectedWords" column multiple>
           <v-chip v-for="word in shuffledWords" :key="word" :value="word"
-            :style="getChipStyle(word.trim(), currentIndex)" variant="elevated">
+            :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large">
             {{ word }}
           </v-chip>
         </v-chip-group>
