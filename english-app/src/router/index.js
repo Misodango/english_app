@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import StartScreen from '@/views/StartScreen.vue'
 import PlayScreen from '@/views/PlayScreen'
 import SettingScreen from '@/views/SettingScreen'
+import NotFoundScreen from '@/views/NotfoundScreen.vue'
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: SettingScreen
+  },
+  {
+    path: '/:notFound(.*)',
+    name: 'error.404',
+    component: NotFoundScreen
   }
   // 他のルートをここに追加していきます
 ]

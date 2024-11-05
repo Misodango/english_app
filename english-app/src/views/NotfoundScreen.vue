@@ -1,12 +1,12 @@
 <template>
-  <v-container class="d-flex align-center justify-center fill-height" fluid>
+  <v-container class="fill-height position-relative" fluid>
     <v-row align="start" justify="center" class="mt-16">
       <v-col cols="12" sm="8" md="4">
         <v-card class="elevation-0 rounded-lg" style="background: rgba(255, 255, 255, 0.95)">
           <v-card-title class="text-h4 font-weight-bold text-center py-6"
             style="font-family: 'Noto Sans JP', sans-serif;">
-            英語学習アプリ
-            <div class="text-subtitle-1 mt-2 text-grey-darken-1">以下のオプションから選択してください</div>
+            このページは存在しないみたいです😣😣
+            <div class="text-subtitle-1 mt-2 text-grey-darken-1">下のボタンから移動してください</div>
           </v-card-title>
           <v-card-text class="pa-6">
             <v-btn @click="startLesson" color="primary" block class="mb-4 py-6 text-body-1 font-weight-medium"
@@ -28,7 +28,7 @@
 
 <script>
 export default {
-  name: 'StartScreen',
+  name: 'NotFoundScreen',
   methods: {
     startLesson() {
       this.$router.push('/play')
