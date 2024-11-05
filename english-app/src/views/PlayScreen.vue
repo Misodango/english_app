@@ -4,18 +4,23 @@
     <v-divider></v-divider>
 
     <!-- 単元選択 (選択後ロック) -->
-    <h2 v-if="!gameStarted">まずは単元を選択しよう</h2>
+    <h2 v-if="!gameStarted">
+      <v-icon icon="mdi-list-box-outline"></v-icon>
+      まずは単元を選択しよう
+    </h2>
 
     <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択" class="mb-4"
       @update:model-value="onLessonSelect" :disabled="gameStarted">
     </v-select>
 
-    <v-btn v-if="selectedLesson && !gameStarted" @click="startGame" color="primary">
+    <v-btn v-if="selectedLesson && !gameStarted" @click="startGame" color="primary" size="large">
+      <v-icon icon="mdi-timer-play-outline"></v-icon>
       ゲームスタート
     </v-btn>
 
     <v-card v-if="currentSentence && gameStarted">
-      <v-card-title>文章を正しく並べ替えてください</v-card-title>
+      <v-card-title>のこり{{ this.sentences.length + 1 }}問</v-card-title>
+      <v-card-subtitle class="text-subtitle-1 mt-2 text-grey-darken-1">文章を正しく並べ替えてください</v-card-subtitle>
       <v-card-text>
         <v-chip-group v-model="selectedWords" column multiple>
           <v-chip v-for="word in shuffledWords" :key="word" :value="word"
@@ -39,15 +44,14 @@
         </v-chip-group>
       </v-card-text>
 
-      <v-card-actions v-if="currentSentence.length > 0">
-        <v-btn @click="popString" color="primary">
+      <v-card-actions v-if="!gameEnded">
+        <v-btn @click="popString" color="orange-darken-2" v-if="currentSentence.length > 0">
+          <v-icon icon="mdi-arrow-left" start></v-icon>
           1つ戻る
         </v-btn>
-      </v-card-actions>
-
-      <v-card-actions v-if="checkLength()">
-        <v-btn @click="checkAnswer" color="primary">
+        <v-btn @click="checkAnswer" color="primary" variant="elevated" v-if="checkLength()">
           回答を確認
+          <v-icon icon="mdi-checkbox-marked-circle" end></v-icon>
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -56,8 +60,12 @@
       {{ feedback }}
     </v-alert>
 
+    <v-spacer></v-spacer>
     <div v-if="gameEnded">
-      <v-btn @click="resetGame" color="primary">もう一度プレイ</v-btn>
+      <v-btn @click="resetGame" color="primary">
+        <v-icon icon="mdi-timer-play-outline"></v-icon>
+        もう一度プレイ
+      </v-btn>
     </div>
   </v-container>
 </template>
@@ -167,6 +175,9 @@ export default {
       this.selectedLesson = null
       this.currentSentence = null
       this.elapsedTime = 0
+      this.feedback = ''
+      this.feedbackType = 'info'
+
     },
 
     shuffleArray(array) {
