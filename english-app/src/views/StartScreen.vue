@@ -23,10 +23,23 @@
         </v-card>
       </v-col>
     </v-row>
+
+  </v-container>
+  <v-divider></v-divider>
+  <v-spacer></v-spacer>
+  <v-container class="">
+    <v-row>
+      <PlayPreview />
+      <v-spacer></v-spacer>
+      <PlayPreview />
+      <v-spacer></v-spacer>
+      <PlayPreview />
+    </v-row>
   </v-container>
 </template>
 
 <script>
+import PlayPreview from './PlayPreview'
 export default {
   name: 'StartScreen',
   methods: {
@@ -35,8 +48,12 @@ export default {
     },
     settings() {
       this.$router.push('/settings')
-    }
-  }
+    },
+  },
+  components: {
+    PlayPreview,
+  },
+
 }
 </script>
 

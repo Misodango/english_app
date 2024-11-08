@@ -8992,6 +8992,11 @@ vue-axios@^3.5.2:
   resolved "https://registry.npmjs.org/vue-axios/-/vue-axios-3.5.2.tgz"
   integrity sha512-GP+dct7UlAWkl1qoP3ppw0z6jcSua5/IrMpjB5O8bh089iIiJ+hdxPYH2NPEpajlYgkW5EVMP95ttXWdas1O0g==
 
+vue-confetti-explosion@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.npmjs.org/vue-confetti-explosion/-/vue-confetti-explosion-1.0.2.tgz"
+  integrity sha512-80OboM3/6BItIoZ6DpNcZFqGpF607kjIVc5af56oKgtFmt5yWehvJeoYhkzYlqxrqdBe0Ko4Ie3bWrmLau+dJw==
+
 vue-eslint-parser@^8.0.1:
   version "8.3.0"
   resolved "https://registry.npmjs.org/vue-eslint-parser/-/vue-eslint-parser-8.3.0.tgz"
@@ -9039,7 +9044,7 @@ vue-template-es2015-compiler@^1.9.0:
   resolved "https://registry.npmjs.org/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.9.1.tgz"
   integrity sha512-4gDntzrifFnCEvyoO8PqyJDmguXgVPxKiIxrBKjIowvL9l+N66196+72XVYR8BBf1Uv1Fgt3bGevJ+sEmxfZzw==
 
-vue@*, "vue@^2 || ^3.2.13", "vue@^3.0.0 || ^2.0.0", vue@^3.2.0, vue@^3.2.13, vue@^3.3.0, vue@3.5.12:
+vue@*, "vue@^2 || ^3.2.13", "vue@^3.0.0 || ^2.0.0", vue@^3.0.5, vue@^3.2.0, vue@^3.2.13, vue@^3.3.0, vue@3.5.12:
   version "3.5.12"
   resolved "https://registry.npmjs.org/vue/-/vue-3.5.12.tgz"
   integrity sha512-CLVZtXtn2ItBIi/zHZ0Sg1Xkb7+PU32bJJ8Bmy7ts3jxXTcbfsEfBivFYYWz1Hur+lalqGAh65Coin0r+HRUfg==

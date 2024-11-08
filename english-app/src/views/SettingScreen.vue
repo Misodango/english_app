@@ -149,7 +149,6 @@ export default {
       // 次の色を設定
       this.wordColors[sentenceIndex][word] = this.colorScheme[keys[nextIndex]];
 
-      console.log(`Word: ${word}, Current Key: ${currentKey}, Next Key: ${keys[nextIndex]}`);
     },
 
     getContrastColor(hexColor) {
@@ -243,7 +242,6 @@ export default {
             }
 
           } catch (error) {
-            console.error(`文章${i + 1}の解析中にエラー:`, error)
             if (axios.isAxiosError(error)) {
               if (error.code === 'ECONNABORTED') {
                 throw new Error('サーバーの応答がタイムアウトしました。しばらく待ってから再試行してください。')
@@ -260,11 +258,8 @@ export default {
         }
 
         this.showMessage('解析が完了しました。', 'success')
-        console.log(this.analyzedSentences)
-        console.log(this.wordColors)
       } catch (error) {
         this.showMessage(`解析中にエラーが発生しました: ${error.message}`, 'error')
-        console.error('SVOC解析エラー:', error)
       } finally {
         this.isProcessing = false
       }
@@ -305,7 +300,6 @@ export default {
       } catch (error) {
         this.message = '保存中にエラーが発生しました。'
         this.messageType = 'error'
-        console.error('保存エラー:', error)
       }
     },
     showMessage(text, type = 'info') {

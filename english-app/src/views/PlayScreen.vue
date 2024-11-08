@@ -62,6 +62,7 @@
 
     <v-spacer></v-spacer>
     <div v-if="gameEnded">
+      <ConfettiExplosion />
       <v-btn @click="resetGame" color="primary">
         <v-icon icon="mdi-timer-play-outline"></v-icon>
         もう一度プレイ
@@ -73,6 +74,7 @@
 <script>
 import { db } from '../firebase/init'
 import { collection, getDocs } from 'firebase/firestore'
+import ConfettiExplosion from 'vue-confetti-explosion'
 
 export default {
   name: 'PlayScreen',
@@ -100,6 +102,9 @@ export default {
         other: '#E0E0E0'
       },
     }
+  },
+  components: {
+    ConfettiExplosion
   },
   async mounted() {
     await this.loadLessons()
@@ -131,7 +136,8 @@ export default {
           ...doc.data()
         }))
       } catch (error) {
-        console.error('Lessons読み込みエラー:', error)
+        this.feedback = '単元の読み込み中にエラーが発生しました'
+        this.feedbackType = 'error'
       }
     },
 
