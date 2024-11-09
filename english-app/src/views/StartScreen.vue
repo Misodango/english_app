@@ -1,45 +1,47 @@
 <template>
-  <v-container class="d-flex align-center justify-center fill-height" fluid>
-    <v-row align="start" justify="center" class="mt-16">
-      <v-col cols="12" sm="8" md="4">
-        <v-card class="elevation-0 rounded-lg" style="background: rgba(255, 255, 255, 0.95)">
-          <v-card-title class="text-h4 font-weight-bold text-center py-6"
-            style="font-family: 'Noto Sans JP', sans-serif;">
-            英語学習アプリ
-            <div class="text-subtitle-1 mt-2 text-grey-darken-1">以下のオプションから選択してください</div>
-          </v-card-title>
-          <v-card-text class="pa-6">
-            <v-btn @click="startLesson" color="primary" block class="mb-4 py-6 text-body-1 font-weight-medium"
-              elevation="2" rounded="lg">
-              <v-icon start icon="mdi-login" class="mr-2"></v-icon>
-              レッスンをはじめる
-            </v-btn>
-            <v-btn @click="settings" variant="outlined" block class="py-6 text-body-1 font-weight-medium" elevation="0"
-              rounded="lg">
-              <v-icon start icon="mdi-cog-outline" class="mr-2"></v-icon>
-              設定
-            </v-btn>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+  <div class="start-screen">
+    <!-- Main Section -->
+    <v-container class="main-section d-flex align-center justify-center fill-height" fluid>
+      <v-row align="start" justify="center" class="mt-16">
+        <v-col cols="12" sm="8" md="4">
+          <v-card class="start-card elevation-0 rounded-lg">
+            <v-card-title class="text-h4 font-weight-bold text-center py-6">
+              英語学習アプリ
+              <div class="text-subtitle-1 mt-2 text-grey-darken-1">以下のオプションから選択してください</div>
+            </v-card-title>
+            <v-card-text class="pa-6">
+              <v-btn @click="startLesson" color="primary" block
+                class="start-btn mb-4 py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
+                <v-icon start icon="mdi-login" class="mr-2"></v-icon>
+                レッスンをはじめる
+              </v-btn>
+              <v-btn @click="settings" variant="outlined" block class="settings-btn py-6 text-body-1 font-weight-medium"
+                elevation="0" rounded="lg">
+                <v-icon start icon="mdi-cog-outline" class="mr-2"></v-icon>
+                設定
+              </v-btn>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
 
-  </v-container>
-  <v-divider></v-divider>
-  <v-spacer></v-spacer>
-  <v-container class="">
-    <v-row>
-      <PlayPreview />
-      <v-spacer></v-spacer>
-      <PlayPreview />
-      <v-spacer></v-spacer>
-      <PlayPreview />
-    </v-row>
-  </v-container>
+    <!-- Preview Section -->
+    <div class="preview-section">
+      <v-container>
+        <v-row justify="center">
+          <v-col cols="12" sm="8" md="6">
+            <PlayPreview />
+          </v-col>
+        </v-row>
+      </v-container>
+    </div>
+  </div>
 </template>
 
 <script>
 import PlayPreview from './PlayPreview'
+
 export default {
   name: 'StartScreen',
   methods: {
@@ -53,90 +55,95 @@ export default {
   components: {
     PlayPreview,
   },
-
 }
 </script>
 
 <style scoped>
-.v-btn {
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+.start-screen {
+  min-height: 100vh;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+/* Main Section Styles */
+.main-section {
+  background: linear-gradient(135deg, #6B8DD6 0%, #8E37D7 100%);
+  min-height: 60vh;
+  padding: 2rem 0;
+}
+
+.start-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.start-btn,
+.settings-btn {
   text-transform: none;
   letter-spacing: 0.5px;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: transform 0.2s ease;
 }
 
-.v-container {
-  background: linear-gradient(135deg, #6B8DD6 0%, #8E37D7 100%);
-  overflow: hidden;
+.start-btn:hover,
+.settings-btn:hover {
+  transform: translateY(-2px);
 }
 
-.lab-scene {
+/* Preview Section Styles */
+.preview-section {
+  min-height: 40vh;
+  padding: 2rem 0;
+  position: relative;
+}
+
+.preview-section::before {
+  content: '';
   position: absolute;
-  bottom: 0;
+  top: -50px;
   left: 0;
   right: 0;
-  height: 50vh;
+  height: 50px;
+  background: linear-gradient(180deg, transparent, rgba(142, 55, 215, 0.1));
   pointer-events: none;
 }
 
-.float-element {
-  position: absolute;
-  color: rgba(255, 255, 255, 0.2);
-  animation: float 6s infinite ease-in-out;
-}
-
-.beaker {
-  left: 20%;
-  bottom: 20%;
-  animation-delay: -2s;
-}
-
-.flask {
-  left: 60%;
-  bottom: 30%;
-  animation-delay: -4s;
-}
-
-.molecule {
-  left: 40%;
-  bottom: 40%;
-  animation-delay: -1s;
-}
-
-.liquid {
-  animation: bubble 3s infinite ease-in-out;
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-20px) rotate(5deg);
-  }
-}
-
-@keyframes bubble {
-
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-/* スマートフォン向けの調整 */
+/* Responsive Adjustments */
 @media (max-width: 600px) {
-  .lab-scene {
-    height: 30vh;
+  .main-section {
+    min-height: 50vh;
   }
 
-  .float-element {
-    transform: scale(0.7);
+  .preview-section {
+    min-height: 50vh;
   }
+
+  .start-card {
+    margin: 1rem;
+  }
+}
+
+/* Animation for gradient background */
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.main-section,
+.preview-section {
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
 }
 </style>
