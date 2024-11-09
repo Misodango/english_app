@@ -24,7 +24,8 @@
       <v-card-text>
         <v-chip-group v-model="selectedWords" column multiple>
           <v-chip v-for="word in shuffledWords" :key="word" :value="word"
-            :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large">
+            :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large" class="play-preview-chip"
+            :class="{ 'selected ': selectedWords.includes(word) }">
             {{ word }}
           </v-chip>
         </v-chip-group>
@@ -32,8 +33,9 @@
 
       <v-divider></v-divider>
 
-      <v-card-text>
-        <v-card-title>
+      <v-card-text class="answer-container pa-6">
+        <v-card-title class="text-subtitle-1 mb-2 font-weight-medium">
+          <v-icon icon="mdi-lightbulb" color="amber-darken-2" class="mr-2"></v-icon>
           あなたの回答
         </v-card-title>
         <v-chip-group column multiple>
@@ -101,6 +103,7 @@ export default {
         complement: '#A5D6A7',
         other: '#E0E0E0'
       },
+      correctCounts: 0,
     }
   },
   components: {
@@ -183,7 +186,7 @@ export default {
       this.elapsedTime = 0
       this.feedback = ''
       this.feedbackType = 'info'
-
+      this.correctCounts = 0
     },
 
     shuffleArray(array) {
@@ -205,6 +208,7 @@ export default {
         this.feedback = '正解です！'
         this.feedbackType = 'success'
         this.nextSentence()
+        this.correctCounts = this.correctCounts + 1
       } else {
         this.feedback = `😣残念．．．もう一度やってみよう！😣`
         this.feedbackType = 'error'
@@ -222,3 +226,33 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.answer-container {
+  min-height: 150px;
+  background: rgba(107, 141, 214, 0.05);
+  border-radius: 12px;
+  margin: 0 16px 16px;
+}
+
+.word-container {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.play-preview-chip {
+  animation: float 1s infinite ease-in-out;
+  margin: 4px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.play-preview-chip.selected {
+  opacity: 0.5;
+  pointer-events: none;
+  transform: scale(0.95);
+}
+</style>
