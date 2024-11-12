@@ -12,8 +12,8 @@
           <v-card-text class="pa-6">
             <v-btn @click="startLesson" color="primary" block class="mb-4 py-6 text-body-1 font-weight-medium"
               elevation="2" rounded="lg">
-              <v-icon start icon="mdi-login" class="mr-2"></v-icon>
-              レッスンをはじめる
+              <v-icon start icon="mdi-home" class="mr-2"></v-icon>
+              タイトルに戻る
             </v-btn>
             <v-btn @click="settings" variant="outlined" block class="py-6 text-body-1 font-weight-medium" elevation="0"
               rounded="lg">
@@ -32,7 +32,7 @@ export default {
   name: 'NotFoundScreen',
   methods: {
     startLesson() {
-      this.$router.push('/play')
+      this.$router.push('/')
     },
     settings() {
       this.$router.push('/settings')
