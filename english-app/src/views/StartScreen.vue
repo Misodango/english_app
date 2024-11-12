@@ -10,11 +10,17 @@
               <div class="text-subtitle-1 mt-2 text-grey-darken-1">以下のオプションから選択してください</div>
             </v-card-title>
             <v-card-text class="pa-6">
-              <v-btn @click="startLesson" color="primary" block
+              <v-btn @click="startSortingGame" color="primary" block
                 class="start-btn mb-4 py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
-                <v-icon start icon="mdi-login" class="mr-2"></v-icon>
-                レッスンをはじめる
+                <v-icon start icon="mdi-swap-horizontal" class="mr-2"></v-icon>
+                並び替えゲーム
               </v-btn>
+              <v-btn @click="startWordQuiz" color="primary" block
+                class="start-btn mb-4 py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
+                <v-icon start icon="mdi-book-alphabet" class="mr-2"></v-icon>
+                単語クイズ
+              </v-btn>
+
               <v-btn @click="settings" variant="outlined" block class="settings-btn py-6 text-body-1 font-weight-medium"
                 elevation="0" rounded="lg">
                 <v-icon start icon="mdi-cog-outline" class="mr-2"></v-icon>
@@ -45,8 +51,11 @@ import PlayPreview from './PlayPreview'
 export default {
   name: 'StartScreen',
   methods: {
-    startLesson() {
+    startSortingGame() {
       this.$router.push('/play')
+    },
+    startWordQuiz(){
+      this.$router.push('/wordQuiz')
     },
     settings() {
       this.$router.push('/settings')

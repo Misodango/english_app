@@ -3,6 +3,7 @@ import StartScreen from '@/views/StartScreen.vue'
 import PlayScreen from '@/views/PlayScreen'
 import SettingScreen from '@/views/SettingScreen'
 import NotFoundScreen from '@/views/NotfoundScreen.vue'
+import WordQuizScreen from '@/views/WordQuiz.vue'
 
 const routes = [
   {
@@ -21,10 +22,16 @@ const routes = [
     component: SettingScreen
   },
   {
+    path: '/wordQuiz',
+    name: 'WordQuiz',
+    component: WordQuizScreen
+  },
+  {
     path: '/:notFound(.*)',
     name: 'error.404',
     component: NotFoundScreen
-  }
+  },
+
   // 他のルートをここに追加していきます
 ]
 
