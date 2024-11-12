@@ -1,78 +1,98 @@
 <template>
-  <v-container>
-    <h1>レッスンを始めよう</h1>
-    <v-divider></v-divider>
+  <div class="sorting-quiz-screen">
+    <v-container class="main-section d-flex align-center justify-center" fluid>
+      <v-row align="center" justify="center">
+        <v-col cols="12" sm="10" md="8" lg="6">
+          <v-card class="start-card elevation-0 rounded-lg">
+            <v-card-title class="text-h4 font-weight-bold text-center py-6">
+              並び替えゲーム
+              <div class="text-subtitle-1 mt-2 text-grey-darken-1">
+                {{ !gameStarted ? '単元を選択してゲームを始めましょう' : '文章を正しく並べ替えてください' }}
+              </div>
+            </v-card-title>
 
-    <!-- 単元選択 (選択後ロック) -->
-    <h2 v-if="!gameStarted">
-      <v-icon icon="mdi-list-box-outline"></v-icon>
-      まずは単元を選択しよう
-    </h2>
+            <v-card-text class="pa-6">
+              <!-- 単元選択部分 -->
+              <div v-if="!gameStarted" class="mb-6">
+                <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択"
+                  variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
 
-    <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択" class="mb-4"
-      @update:model-value="onLessonSelect" :disabled="gameStarted">
-    </v-select>
+                <v-btn v-if="selectedLesson" @click="startGame" color="primary" block
+                  class="start-btn py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
+                  <v-icon start icon="mdi-timer-play-outline" class="mr-2"></v-icon>
+                  ゲームスタート
+                </v-btn>
+              </div>
 
-    <v-btn v-if="selectedLesson && !gameStarted" @click="startGame" color="primary" size="large">
-      <v-icon icon="mdi-timer-play-outline"></v-icon>
-      ゲームスタート
-    </v-btn>
+              <!-- ゲーム部分 -->
+              <div v-if="gameStarted && currentSentence" class="game-content">
+                <v-card-subtitle class="text-h6 mb-4">
+                  のこり{{ sentences.length + 1 }}問
+                </v-card-subtitle>
 
-    <v-card v-if="currentSentence && gameStarted">
-      <v-card-title>のこり{{ this.sentences.length + 1 }}問</v-card-title>
-      <v-card-subtitle class="text-subtitle-1 mt-2 text-grey-darken-1">文章を正しく並べ替えてください</v-card-subtitle>
-      <v-card-text>
-        <v-chip-group v-model="selectedWords" column multiple>
-          <v-chip v-for="word in shuffledWords" :key="word" :value="word"
-            :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large" class="play-preview-chip"
-            :class="{ 'selected ': selectedWords.includes(word) }">
-            {{ word }}
-          </v-chip>
-        </v-chip-group>
-      </v-card-text>
+                <v-chip-group v-model="selectedWords" column multiple class="word-container mb-6">
+                  <v-chip v-for="word in shuffledWords" :key="word" :value="word"
+                    :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large"
+                    class="play-preview-chip" :class="{ 'selected': selectedWords.includes(word) }">
+                    {{ word }}
+                  </v-chip>
+                </v-chip-group>
 
-      <v-divider></v-divider>
+                <div class="answer-container pa-4 mb-6">
+                  <div class="text-subtitle-1 mb-2 font-weight-medium">
+                    <v-icon icon="mdi-lightbulb" color="amber-darken-2" class="mr-2"></v-icon>
+                    あなたの回答
+                  </div>
+                  <v-chip-group column multiple>
+                    <v-chip v-for="word in selectedWords" :key="word" :value="word"
+                      :style="getChipStyle(word.trim(), currentIndex)" variant="outlined" size="large">
+                      {{ word }}
+                    </v-chip>
+                  </v-chip-group>
+                </div>
 
-      <v-card-text class="answer-container pa-6">
-        <v-card-title class="text-subtitle-1 mb-2 font-weight-medium">
-          <v-icon icon="mdi-lightbulb" color="amber-darken-2" class="mr-2"></v-icon>
-          あなたの回答
-        </v-card-title>
-        <v-chip-group column multiple>
-          <v-chip v-for="word in selectedWords" :key="word" :value="word"
-            :style="getChipStyle(word.trim(), currentIndex)" variant="outlined">
-            {{ word }}
-          </v-chip>
-        </v-chip-group>
-      </v-card-text>
+                <v-alert v-if="feedback" :type="feedbackType" variant="tonal" class="mb-4">
+                  {{ feedback }}
+                </v-alert>
 
-      <v-card-actions v-if="!gameEnded">
-        <v-btn @click="popString" color="orange-darken-2" v-if="currentSentence.length > 0">
-          <v-icon icon="mdi-arrow-left" start></v-icon>
-          1つ戻る
-        </v-btn>
-        <v-btn @click="checkAnswer" color="primary" variant="elevated" v-if="checkLength()">
-          回答を確認
-          <v-icon icon="mdi-checkbox-marked-circle" end></v-icon>
-        </v-btn>
-      </v-card-actions>
-    </v-card>
+                <div class="d-flex gap-4">
+                  <v-btn v-if="!gameEnded && currentSentence.length > 0" @click="popString" color="orange-darken-2"
+                    variant="tonal" class="flex-grow-1">
+                    <v-icon icon="mdi-arrow-left" start></v-icon>
+                    1つ戻る
+                  </v-btn>
+                  <v-btn v-if="!gameEnded && checkLength()" @click="checkAnswer" color="primary" variant="elevated"
+                    class="flex-grow-1">
+                    回答を確認
+                    <v-icon icon="mdi-checkbox-marked-circle" end></v-icon>
+                  </v-btn>
+                </div>
+              </div>
 
-    <v-alert v-if="feedback" :type="feedbackType" class="mt-4">
-      {{ feedback }}
-    </v-alert>
-
-    <v-spacer></v-spacer>
-    <div v-if="gameEnded">
-      <ConfettiExplosion />
-      <v-btn @click="resetGame" color="primary">
-        <v-icon icon="mdi-timer-play-outline"></v-icon>
-        もう一度プレイ
-      </v-btn>
-    </div>
-  </v-container>
+              <!-- ゲーム終了部分 -->
+              <div v-if="gameEnded" class="text-center">
+                <ConfettiExplosion />
+                <v-card-text class="pa-6">
+                  <v-btn @click="resetGame" color="primary" block class="start-btn py-6 text-body-1 font-weight-medium"
+                    elevation="2" rounded="lg">
+                    <v-icon icon="mdi-timer-play-outline" class="mr-2"></v-icon>
+                    もう一度プレイ
+                  </v-btn>
+                  <v-divider></v-divider>
+                  <v-btn @click="returnHome" color="primary" block class="start-btn py-6 text-body-1 font-weight-medium"
+                    elevation="2" rounded="lg">
+                    <v-icon icon="mdi-home" class="mr-2"></v-icon>
+                    スタート画面に戻る
+                  </v-btn>
+                </v-card-text>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </div>
 </template>
-
 <script>
 import { db } from '../firebase/init'
 import { collection, getDocs } from 'firebase/firestore'
@@ -189,6 +209,10 @@ export default {
       this.correctCounts = 0
     },
 
+    returnHome() {
+      this.$router.push('/')
+    },
+
     shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
@@ -227,12 +251,34 @@ export default {
 }
 </script>
 
+
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+.sorting-quiz-screen {
+  min-height: 100vh;
+  font-family: 'Noto Sans JP', sans-serif;
+  background: linear-gradient(135deg, #6B8DD6 0%, #8E37D7 100%);
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+.main-section {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.start-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
 .answer-container {
-  min-height: 150px;
   background: rgba(107, 141, 214, 0.05);
   border-radius: 12px;
-  margin: 0 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .word-container {
@@ -240,11 +286,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .play-preview-chip {
-  animation: float 1s infinite ease-in-out;
   margin: 4px;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -254,5 +300,39 @@ export default {
   opacity: 0.5;
   pointer-events: none;
   transform: scale(0.95);
+}
+
+.start-btn {
+  text-transform: none;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s ease;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-section {
+    padding: 1rem;
+  }
+
+  .start-card {
+    margin: 1rem;
+  }
 }
 </style>

@@ -67,7 +67,8 @@
             </v-alert>
 
             <!-- 確認ボタン -->
-            <v-btn @click="checkAnswer" color="primary" size="x-large" rounded="lg" class="check-btn" block>
+            <v-btn @click="checkAnswer" color="primary" size="x-large" rounded="lg" class="check-btn" block
+              :loading="correctText === 'Excellent!!'" :disabled="selectedWordIndex === null || correctText === 'Excellent!!'">
               {{ buttonTextC }}
             </v-btn>
           </v-card>
@@ -80,6 +81,10 @@
             <v-card-text class="text-h6">
               かかった時間は {{ elapsedTime }} 秒です
             </v-card-text>
+            <v-card-actions>
+              <v-btn color="primary" @click="againGame" class="check-btn" rounded="lg">もう一度</v-btn>
+              <v-btn color="primary" @click="returnHome" ize="x-large" rounded="lg" class="check-btn">タイトルにもどる</v-btn>
+            </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
@@ -148,6 +153,12 @@ import jsonData from '@/assets/json/easy-lesson.json';
 
 export default {
   name: "WordQuizScreen",
+  methods: {
+    returnHome() {
+      this.$router.push('/')
+    },
+
+  },
   setup() {
     const quizzes = ref([]);
     const isStarted = ref(false);
@@ -201,6 +212,20 @@ export default {
 
     loadQuizzes();
 
+    const againGame = () => {
+      loadQuizzes();
+      isStarted.value = false;
+      totalQuizzes.value = 0;
+      totalQuizzesPersonal.value = null;
+      currentIndex.value = 0;
+      selectedWordIndex.value = null;
+      buttonTextC.value = 'Check';
+      correctText.value = undefined;
+      correctAnswer.value = undefined;
+      elapsedTime.value = 0;
+      currentQuiz.value = computed(() => quizzes.value[currentIndex.value]);
+      startTime.value = Date.now();
+    }
     return {
       quizzes,
       isStarted,
@@ -216,6 +241,7 @@ export default {
       selectedWord,
       checkAnswer,
       elapsedTime,
+      againGame,
     };
   },
 
