@@ -40,7 +40,6 @@
 
 <script>
 import ConfettiExplosion from 'vue-confetti-explosion'
-
 export default {
   name: "PlayPreview",
   components: {
