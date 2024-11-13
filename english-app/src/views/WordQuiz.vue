@@ -33,25 +33,23 @@
           <!-- プログレスバー -->
           <v-progress-linear :model-value="progressPercentage" color="primary" height="10" rounded
             class="mb-6"></v-progress-linear>
-
           <!-- クイズコンテンツ -->
           <v-card v-if="currentIndex < totalQuizzesPersonal" class="quiz-card pa-6" elevation="0">
             <v-card-title class="text-h5 text-center mb-6">
               画像に合う単語を選んでください
             </v-card-title>
-
             <!-- 画像表示 -->
             <div class="text-center mb-6">
               <v-img :src="require(`@/assets/${currentQuiz.image}`)" :width="currentQuiz.width"
                 :height="currentQuiz.height" class="mx-auto" cover></v-img>
             </div>
-
             <!-- 選択肢 -->
             <v-row justify="center" class="word-options mb-6">
               <v-col v-for="(word, index) in currentQuiz.words" :key="index" cols="12" sm="6" md="3"
                 class="d-flex justify-center">
                 <v-btn :class="{ 'selected': selectedWordIndex === index }" @click="selectedWord(index)"
                   variant="outlined" size="large" rounded="pill" block class="word-btn">
+                  <ConfettiExplosion v-if="correctText === 'Excellent!!'" />
                   {{ word }}
                 </v-btn>
               </v-col>
@@ -68,7 +66,7 @@
 
             <!-- 確認ボタン -->
             <v-btn @click="checkAnswer" color="primary" size="x-large" rounded="lg" class="check-btn" block
-              :loading="correctText === 'Excellent!!'" :disabled="selectedWordIndex === null || correctText === 'Excellent!!'">
+              :loading="correctText === 'Excellent!!'" :disabled="selectedWordIndex === null || correctText === 'Excellent!!' || correctText === 'False.'">
               {{ buttonTextC }}
             </v-btn>
           </v-card>
@@ -150,9 +148,13 @@
 <script>
 import { ref, computed } from 'vue';
 import jsonData from '@/assets/json/easy-lesson.json';
+import ConfettiExplosion from 'vue-confetti-explosion'
 
 export default {
   name: "WordQuizScreen",
+  components: {
+    ConfettiExplosion
+  },
   methods: {
     returnHome() {
       this.$router.push('/')
@@ -196,7 +198,7 @@ export default {
         correctAnswer.value = undefined;
         currentIndex.value++;
         selectedWordIndex.value = null;
-
+        correctText.value = null;
         if (currentIndex.value >= totalQuizzesPersonal.value) {
           const endTime = Date.now();
           elapsedTime.value = Math.floor((endTime - startTime.value) / 1000);
