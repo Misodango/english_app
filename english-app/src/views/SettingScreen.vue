@@ -56,7 +56,10 @@
     <v-alert v-if="message" :type="messageType" class="mt-4" closable>
       {{ message }}
     </v-alert>
-  </v-container>
+    </v-container>
+    <v-btn class="floating-btn" color="primary" icon="mdi-home" size="x-large"
+        @click="$router.push('/')"></v-btn>
+
 </template>
 
 <script>
@@ -329,5 +332,12 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+
+.floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
 }
 </style>
