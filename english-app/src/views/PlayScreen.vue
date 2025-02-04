@@ -90,8 +90,13 @@
           </v-card>
         </v-col>
       </v-row>
-    </v-container>
+
+          </v-container>
   </div>
+
+  <v-btn class="floating-btn" color="white" icon="mdi-home" size="x-large"
+      @click="$router.push('/')"></v-btn>
+
 </template>
 <script>
 import { db } from '../firebase/init'
@@ -334,5 +339,12 @@ export default {
   .start-card {
     margin: 1rem;
   }
+}
+
+.floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
 }
 </style>
