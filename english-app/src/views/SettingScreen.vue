@@ -4,18 +4,12 @@
 
     <!-- ファイルアップロード部分 -->
     <v-file-input v-model="file" label="CSVファイルをアップロード" accept=".csv" @change="handleFileUpload"
-      class="mb-4"></v-file-input>
+      class="mb-4" ></v-file-input>
 
     <!-- 単元選択部分 -->
     <div v-if="!gameStarted" class="mb-6">
       <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="または，単元を選択して編集"
         variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
-
-      <!-- <v-btn v-if="selectedLesson" @click="startGame" color="primary" block -->
-      <!--   class="start-btn py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg"> -->
-      <!--   <v-icon start icon="mdi-timer-play-outline" class="mr-2"></v-icon> -->
-      <!--   ゲームスタート -->
-      <!-- </v-btn> -->
     </div>
 
     <!-- ファイルの内容確認・編集部分 -->
@@ -58,6 +52,11 @@
         </v-btn>
 
         <v-spacer></v-spacer>
+
+        <v-btn prepend-icon="mdi-close" variant="tonal" color="error" @click="onCancelHandle">
+          キャンセル
+        </v-btn>
+
         <v-btn prepend-icon="mdi-check" variant="tonal" color="primary" @click="saveSentences" :disabled="!isValidData || isProcessing">
           {{currentDataType==='lesson' ? "更新" : "保存"}}
         </v-btn>
@@ -150,6 +149,20 @@ export default {
         this.fileName = lesson.name
       }
     },
+
+    onCancelHandle(){
+      if(this.currentDataType === 'lesson'){
+        this.sentences = []
+        this.wordColors = []
+        this.fileName = ''
+      }else{
+        this.file = null
+        this.sentences = []
+        this.wordColors = []
+        this.fileName = ''
+      }
+    },
+
 
     getWordType(word, analysis) {
       if (analysis.subject.includes(word)) return 'subject'
@@ -357,6 +370,9 @@ export default {
     showMessage(text, type = 'info') {
       this.message = text
       this.messageType = type
+    },
+    dragEnter(e) {
+      console.log('dragEnter', e)
     }
   }
 }
