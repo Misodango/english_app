@@ -6,6 +6,18 @@
     <v-file-input v-model="file" label="CSVファイルをアップロード" accept=".csv" @change="handleFileUpload"
       class="mb-4"></v-file-input>
 
+    <!-- 単元選択部分 -->
+    <div v-if="!gameStarted" class="mb-6">
+      <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="または，単元を選択して編集"
+        variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
+
+      <!-- <v-btn v-if="selectedLesson" @click="startGame" color="primary" block -->
+      <!--   class="start-btn py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg"> -->
+      <!--   <v-icon start icon="mdi-timer-play-outline" class="mr-2"></v-icon> -->
+      <!--   ゲームスタート -->
+      <!-- </v-btn> -->
+    </div>
+
     <!-- ファイルの内容確認・編集部分 -->
     <v-card v-if="sentences.length > 0" class="mb-4">
       <v-card-title>
@@ -46,8 +58,8 @@
         </v-btn>
 
         <v-spacer></v-spacer>
-        <v-btn prepend-icon="mdi-check" variant="tonal" color="primary" @click="saveSentences" :disabled="!isValidData">
-          保存
+        <v-btn prepend-icon="mdi-check" variant="tonal" color="primary" @click="saveSentences" :disabled="!isValidData || isProcessing">
+          {{currentDataType==='lesson' ? "更新" : "保存"}}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -60,7 +72,7 @@
     <v-btn class="floating-btn" color="primary" icon="mdi-home" size="x-large"
         @click="$router.push('/')"></v-btn>
 
-</template>
+    </template>
 
 <script>
 import { db } from '../firebase/init'
@@ -71,6 +83,10 @@ export default {
   name: 'SettingsScreen',
   data() {
     return {
+      currentDataType: null,
+      lessons: [],
+      selectedLesson: null,
+
       file: null,
       sentences: [], // 元の文章（カンマ区切り）
       analyzedSentences: [], // 解析結果を保持
@@ -102,9 +118,39 @@ export default {
       return this.fileName.trim() !== '' &&
         this.sentences.length > 0 &&
         this.sentences.every(s => s.trim() !== '')
-    }
+    },
   },
+
+  async mounted() {
+    await this.loadLessons()
+  },
+
   methods: {
+
+    async loadLessons() {
+      try {
+        const lessonsRef = collection(db, 'lessons')
+        const querySnapshot = await getDocs(lessonsRef)
+        this.lessons = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+      } catch (error) {
+        this.feedback = '単元の読み込み中にエラーが発生しました'
+        this.feedbackType = 'error'
+      }
+    },
+
+    onLessonSelect() {
+      const lesson = this.lessons.find(l => l.id === this.selectedLesson)
+      this.currentDataType = 'lesson'
+      if (lesson) {
+        this.sentences = [...lesson.sentences]
+        this.wordColors = [...lesson.wordColors]
+        this.fileName = lesson.name
+      }
+    },
+
     getWordType(word, analysis) {
       if (analysis.subject.includes(word)) return 'subject'
       if (analysis.verb.includes(word)) return 'verb'
@@ -169,6 +215,7 @@ export default {
 
     handleFileUpload() {
       if (this.file) {
+        this.currentDataType = 'file'
         const reader = new FileReader()
         reader.onload = (e) => {
           const content = e.target.result
@@ -303,6 +350,8 @@ export default {
       } catch (error) {
         this.message = '保存中にエラーが発生しました。'
         this.messageType = 'error'
+      }finally {
+        this.isProcessing = false
       }
     },
     showMessage(text, type = 'info') {
