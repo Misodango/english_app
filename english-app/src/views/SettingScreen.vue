@@ -41,25 +41,31 @@
           </div>
         </div>
       </v-card-text>
-      <v-card-actions>
-        <v-btn prepend-icon="mdi-plus" variant="tonal" @click="addNewSentence" class="mr-2">
-          新しい問題を追加
-        </v-btn>
+      <v-divider></v-divider>
+      <v-card-actions class="overflow-x-auto d-flex" style="min-width: 0">
+        <div class="d-flex align-center" style="gap: 8px">
+          <v-btn prepend-icon="mdi-plus" variant="tonal" @click="addNewSentence">
+            新しい問題を追加
+          </v-btn>
 
-        <v-btn prepend-icon="mdi-content-cut" variant="tonal" @click="extractSVOC" class="mr-2" :loading="isProcessing"
-          :disabled="isProcessing || !isValidData">
-          品詞分解
-        </v-btn>
+          <v-btn prepend-icon="mdi-content-cut" variant="tonal" @click="extractSVOC"
+            :loading="isProcessing"
+            :disabled="isProcessing || !isValidData">
+            品詞分解
+          </v-btn>
 
-        <v-spacer></v-spacer>
+          <v-spacer></v-spacer>
 
-        <v-btn prepend-icon="mdi-close" variant="tonal" color="error" @click="onCancelHandle">
-          キャンセル
-        </v-btn>
+          <v-btn prepend-icon="mdi-close" variant="tonal" color="error" @click="onCancelHandle">
+            キャンセル
+          </v-btn>
 
-        <v-btn prepend-icon="mdi-check" variant="tonal" color="primary" @click="saveSentences" :disabled="!isValidData || isProcessing">
-          {{currentDataType==='lesson' ? "更新" : "保存"}}
-        </v-btn>
+          <v-btn prepend-icon="mdi-check" variant="tonal" color="primary"
+            @click="saveSentences"
+            :disabled="!isValidData || isProcessing">
+            {{currentDataType==='lesson' ? "更新" : "保存"}}
+          </v-btn>
+        </div>
       </v-card-actions>
     </v-card>
 
@@ -125,7 +131,6 @@ export default {
   },
 
   methods: {
-
     async loadLessons() {
       try {
         const lessonsRef = collection(db, 'lessons')
