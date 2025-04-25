@@ -1,0 +1,28 @@
+<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Grammar/Sentence Rearrangement Icon -->
+  <g transform="translate(100, 150)">
+    <!-- Blue circular background -->
+    <circle cx="0" cy="0" r="100" fill="#4285F4" />
+
+    <!-- Word blocks for rearrangement -->
+    <rect x="-70" y="-40" width="50" height="25" rx="5" ry="5" fill="white" />
+    <text x="-45" y="-24" font-family="Arial" font-size="14" text-anchor="middle" fill="#333">the</text>
+
+    <rect x="-10" y="-40" width="50" height="25" rx="5" ry="5" fill="white" />
+    <text x="15" y="-24" font-family="Arial" font-size="14" text-anchor="middle" fill="#333">dog</text>
+
+    <rect x="50" y="-40" width="50" height="25" rx="5" ry="5" fill="white" />
+    <text x="75" y="-24" font-family="Arial" font-size="14" text-anchor="middle" fill="#333">runs</text>
+
+    <!-- Arrows indicating rearrangement -->
+    <path d="M-45,0 C-45,20 15,20 15,0" stroke="white" stroke-width="3" fill="none" stroke-dasharray="5,3" />
+    <polygon points="15,-5 15,5 25,0" fill="white" />
+
+    <path d="M15,10 C15,-10 75,-10 75,10" stroke="white" stroke-width="3" fill="none" stroke-dasharray="5,3" />
+    <polygon points="75,15 75,5 85,10" fill="white" />
+
+    <!-- Line representing completed sentence -->
+    <rect x="-70" y="30" width="140" height="2" fill="white" />
+  </g>
+
+</svg>

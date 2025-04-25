@@ -33,7 +33,7 @@
                 <v-chip-group v-model="selectedWords" column multiple class="word-container mb-6">
                   <v-chip v-for="word in shuffledWords" :key="word" :value="word"
                     :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large"
-                    class="play-preview-chip" :class="{ 'selected': selectedWords.includes(word) }">
+                    class="play-preview-chip large-chip" :class="{ 'selected': selectedWords.includes(word) }">
                     {{ word }}
                   </v-chip>
                 </v-chip-group>
@@ -258,11 +258,12 @@ export default {
 
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDPGothic&display=swap');
 
 .sorting-quiz-screen {
   min-height: 100vh;
-  font-family: 'Noto Sans JP', sans-serif;
+  font-family: 'BIZ UDPGothic', sans-serif;
+  font-weight: 200;
   background: linear-gradient(135deg, #6B8DD6 0%, #8E37D7 100%);
   background-size: 200% 200%;
   animation: gradientAnimation 15s ease infinite;
@@ -287,12 +288,22 @@ export default {
 }
 
 .word-container {
-  min-height: 120px;
+  min-height: 180px;
+  padding: 20px 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
+}
+
+.large-chip {
+  font-size: 1.5rem !important;
+  padding: 12px 24px !important;
+  height: 60px !important;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .play-preview-chip {

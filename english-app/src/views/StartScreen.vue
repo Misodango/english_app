@@ -18,7 +18,7 @@
               <v-btn @click="startWordQuiz" color="primary" block
                 class="start-btn mb-4 py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
                 <v-icon start icon="mdi-book-alphabet" class="mr-2"></v-icon>
-                単語クイズ
+                単語クイズ(外部リンク🔗)
               </v-btn>
 
               <v-btn @click="settings" variant="outlined" block class="settings-btn py-6 text-body-1 font-weight-medium"
@@ -55,7 +55,7 @@ export default {
       this.$router.push('/play')
     },
     startWordQuiz(){
-      this.$router.push('/wordQuiz')
+      window.location.href = 'https://english-picture-game.web.app/#/'
     },
     settings() {
       this.$router.push('/settings')
