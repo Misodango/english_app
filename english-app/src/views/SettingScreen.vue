@@ -77,6 +77,8 @@
     <v-btn class="floating-btn" color="primary" icon="mdi-home" size="x-large"
         @click="$router.push('/')"></v-btn>
 
+    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdCcV_x_SOWFR_DyXy017G9ah1YFzhiOhrUo9V5F7n244OlrA/viewform?embedded=true" width="100%" height="702" frameborder="0" marginheight="0" marginwidth="0">読み込んでいます…</iframe>
+
     </template>
 
 <script>
