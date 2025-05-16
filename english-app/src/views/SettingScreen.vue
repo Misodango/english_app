@@ -65,12 +65,18 @@
             :disabled="!isValidData || isProcessing">
             {{currentDataType==='lesson' ? "更新" : "保存"}}
           </v-btn>
+
+          <v-btn prepend-icon="mdi-delete" variant="tonal" color="error" @click="showDeleteConfirmation"
+            :disabled="!isValidData || isProcessing || currentDataType !== 'lesson'">
+            削除
+          </v-btn>
+
         </div>
       </v-card-actions>
     </v-card>
 
     <!-- メッセージ表示 -->
-    <v-alert v-if="message" :type="messageType" class="mt-4" closable>
+    <v-alert v-if="message" :type="messageType" class="mt-4" closable @click:close="clearMessage">
       {{ message }}
     </v-alert>
     </v-container>
@@ -79,11 +85,39 @@
 
     <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdCcV_x_SOWFR_DyXy017G9ah1YFzhiOhrUo9V5F7n244OlrA/viewform?embedded=true" width="100%" height="702" frameborder="0" marginheight="0" marginwidth="0">読み込んでいます…</iframe>
 
-    </template>
+    <!-- 削除確認ダイアログ -->
+    <v-dialog v-model="deleteDialog" max-width="500px">
+      <v-card>
+        <v-card-title>確認</v-card-title>
+        <v-card-text>
+          「{{ fileName }}」を削除してもよろしいですか？
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="deleteDialog = false">キャンセル</v-btn>
+          <v-btn color="error" variant="text" @click="removeData">削除する</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 保存成功ダイアログ -->
+    <v-dialog v-model="successDialog" max-width="500px">
+      <v-card>
+        <v-card-title>成功</v-card-title>
+        <v-card-text>
+          {{ successMessage }}
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" variant="text" @click="closeSuccessDialog">OK</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+</template>
 
 <script>
 import { db } from '../firebase/init'
-import { collection, addDoc, query, getDocs, where, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, query, getDocs, where, updateDoc, writeBatch } from 'firebase/firestore'
 import axios from 'axios'
 
 export default {
@@ -102,6 +136,9 @@ export default {
       messageType: 'info',
       fileName: '',
       isProcessing: false,
+      deleteDialog: false,  // 削除確認ダイアログ
+      successDialog: false, // 保存成功ダイアログ
+      successMessage: '',   // 成功メッセージ
       colorScheme: {
         subject: '#FFEB3B', // 黄色
         verb: '#A5D6A7', // 緑
@@ -133,6 +170,31 @@ export default {
   },
 
   methods: {
+    clearMessage() {
+      this.message = '';
+    },
+
+    closeSuccessDialog() {
+      this.successDialog = false;
+      this.resetForm();
+    },
+
+    resetForm() {
+      if (this.currentDataType) {
+        this.sentences = [];
+        this.wordColors = [];
+        this.fileName = '';
+        this.analyzedSentences = [];
+        this.currentDataType = null;
+        this.selectedLesson = null;
+        this.file = null;
+      }
+    },
+
+    showDeleteConfirmation() {
+      this.deleteDialog = true;
+    },
+
     async loadLessons() {
       try {
         const lessonsRef = collection(db, 'lessons')
@@ -158,18 +220,8 @@ export default {
     },
 
     onCancelHandle(){
-      if(this.currentDataType === 'lesson'){
-        this.sentences = []
-        this.wordColors = []
-        this.fileName = ''
-      }else{
-        this.file = null
-        this.sentences = []
-        this.wordColors = []
-        this.fileName = ''
-      }
+      this.resetForm();
     },
-
 
     getWordType(word, analysis) {
       if (analysis.subject.includes(word)) return 'subject'
@@ -258,6 +310,44 @@ export default {
 
     removeSentence(index) {
       this.sentences.splice(index, 1)
+    },
+
+    async removeData() {
+      this.deleteDialog = false;
+      if (this.currentDataType !== 'lesson') return;
+
+      const lessonsRef = collection(db, 'lessons');
+      const q = query(lessonsRef, where("name", "==", this.fileName));
+      this.showMessage(`データを削除中です...${this.fileName}`, 'info');
+
+      try {
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          this.showMessage('指定された単元は存在しません。', 'error');
+          return;
+        }
+
+        const batch = writeBatch(db);
+        querySnapshot.forEach(doc => {
+          console.log("削除対象:", doc.id);
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+
+        // 成功ダイアログを表示
+        this.successMessage = 'データが正常に削除されました。';
+        this.successDialog = true;
+        this.showMessage('データが正常に削除されました。', true);
+
+        // レッスンリストを再読み込み
+        await this.loadLessons();
+
+      } catch (error) {
+        console.error("削除中にエラー:", error);
+        this.showMessage(`削除中にエラーが発生しました: ${error.message}`, 'error');
+      }
     },
 
     validateSentence(sentence) {
@@ -360,24 +450,35 @@ export default {
 
         if (querySnapshot.empty) {
           await addDoc(lessonsRef, lessonData)
+          this.successMessage = '文章が正常に保存されました。';
+          this.showMessage('データが正常に保存されました。', true);
         } else {
           const docRef = querySnapshot.docs[0].ref
           await updateDoc(docRef, lessonData)
+          this.successMessage = '文章が正常に更新されました。';
+          this.showMessage('データが正常に更新されました。', true);
         }
 
-        this.message = '文章が正常に保存されました。'
-        this.messageType = 'success'
+        // 成功ダイアログを表示
+        this.successDialog = true;
+
+        // レッスンリストを再読み込み
+        await this.loadLessons();
+
       } catch (error) {
         this.message = '保存中にエラーが発生しました。'
+        this.showMessage('保存中にエラーが発生しました。', false);
         this.messageType = 'error'
-      }finally {
+      } finally {
         this.isProcessing = false
       }
     },
+
     showMessage(text, type = 'info') {
       this.message = text
       this.messageType = type
     },
+
     dragEnter(e) {
       console.log('dragEnter', e)
     }
