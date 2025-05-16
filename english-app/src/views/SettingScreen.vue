@@ -456,7 +456,7 @@ export default {
           const docRef = querySnapshot.docs[0].ref
           await updateDoc(docRef, lessonData)
           this.successMessage = '文章が正常に更新されました。';
-          this.showMessage('データが正常に削除されました。', true);
+          this.showMessage('データが正常に更新されました。', true);
         }
 
         // 成功ダイアログを表示
