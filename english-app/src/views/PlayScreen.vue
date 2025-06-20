@@ -110,6 +110,7 @@ export default {
       lessons: [],
       selectedLesson: null,
       sentences: [],
+      delimiter: ',',
       currentSentence: null,
       currentIndex: 0,
       wordColors: [],
@@ -174,6 +175,7 @@ export default {
       if (lesson) {
         this.sentences = [...lesson.sentences]
         this.wordColors = [...lesson.wordColors]
+        this.delimiter = lesson.delimiter === 'comma' ? ',' : ' '
       }
     },
 
@@ -186,7 +188,7 @@ export default {
     nextSentence() {
       if (this.sentences.length > 0) {
         this.currentSentence = this.sentences.pop()
-        this.shuffledWords = this.shuffleArray(this.currentSentence.split(','))
+        this.shuffledWords = this.shuffleArray(this.currentSentence.split(this.delimiter))
         this.selectedWords = []
         this.feedback = ''
         this.feedbackType = 'info'
@@ -227,7 +229,7 @@ export default {
     },
 
     isCorrect() {
-      const correctAnswer = this.currentSentence.split(',').join(' ')
+      const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
       const userAnswer = this.selectedWords.join(' ')
       return correctAnswer === userAnswer
     },
@@ -244,7 +246,7 @@ export default {
       }
     },
     checkLength() {
-      const correctAnswer = this.currentSentence.split(',').join(' ')
+      const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
       const userAnswer = this.selectedWords.join(' ')
       return (userAnswer.length == correctAnswer.length)
     },
