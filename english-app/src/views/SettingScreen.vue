@@ -303,11 +303,7 @@ export default {
             .map(line => line.trim())
           // ファイル名から拡張子を除いて単元名の初期値として設定
           if (this.file.name) {
-              if(this.selectedDelimiter === 'comma') {
-                this.fileName = this.file.name.replace(/\.csv$/, '')
-              } else {
-                this.fileName = this.file.name.replace(/\.txt$/, '')
-              }
+            this.fileName = this.file.name.replace(/\.(csv|txt)$/i, '');
           }
         }
         reader.readAsText(this.file)
