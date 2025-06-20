@@ -12,6 +12,13 @@
         variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
     </div>
 
+
+    <!-- コンマ区切りかスペース区切りを選択 -->
+    <v-btn-toggle v-model="selectedDelimiter" class="mb-4" color="primary">
+      <v-btn value="comma" variant="tonal" @change="handleFileUpload">コンマ区切り</v-btn>
+      <v-btn value="space" variant="tonal" @change="handleFileUpload">スペース区切り</v-btn>
+    </v-btn-toggle>
+
     <!-- ファイルの内容確認・編集部分 -->
     <v-card v-if="sentences.length > 0" class="mb-4">
       <v-card-title>
@@ -33,7 +40,7 @@
 
             <!-- プレビュー表示 -->
             <div class="preview-chips ml-8 mt-2">
-              <v-chip v-for="(word, wordIndex) in sentence.split(',')" :key="wordIndex" size="small" class="ma-1"
+              <v-chip v-for="(word, wordIndex) in sentence.split(this.selectedDelimiter === 'comma' ? ',' : ' ')" :key="wordIndex" size="small" class="ma-1"
                 :style="getChipStyle(word.trim(), index)" variant="tonal" @click="changeChipColor(word.trim(), index)">
                 {{ word.trim() }}
               </v-chip>
@@ -127,7 +134,7 @@ export default {
       currentDataType: null,
       lessons: [],
       selectedLesson: null,
-
+      selectedDelimiter: 'comma', // デフォルトはコンマ区切り
       file: null,
       sentences: [], // 元の文章（カンマ区切り）
       analyzedSentences: [], // 解析結果を保持
@@ -294,10 +301,13 @@ export default {
           this.sentences = content.split('\n')
             .filter(line => line.trim() !== '')
             .map(line => line.trim())
-
           // ファイル名から拡張子を除いて単元名の初期値として設定
           if (this.file.name) {
-            this.fileName = this.file.name.replace(/\.csv$/, '')
+              if(this.selectedDelimiter === 'comma') {
+                this.fileName = this.file.name.replace(/\.csv$/, '')
+              } else {
+                this.fileName = this.file.name.replace(/\.txt$/, '')
+              }
           }
         }
         reader.readAsText(this.file)
@@ -330,7 +340,6 @@ export default {
 
         const batch = writeBatch(db);
         querySnapshot.forEach(doc => {
-          console.log("削除対象:", doc.id);
           batch.delete(doc.ref);
         });
 
@@ -351,8 +360,8 @@ export default {
     },
 
     validateSentence(sentence) {
-      // カンマ区切りの形式が正しいかチェック
-      const words = sentence.split(',')
+      // 区切りの形式が正しいかチェック
+      const words = sentence.split(this.selectedDelimiter === 'comma' ? ',' : ' ')
       return words.length >= 2 && words.every(word => word.trim() !== '')
     },
 
@@ -380,9 +389,8 @@ export default {
 
         for (let i = 0; i < this.sentences.length; i++) {
           const sentence = this.sentences[i]
-          const words = sentence.split(',')
+          const words = sentence.split(this.selectedDelimiter === 'comma' ? ',' : ' ')
           const wholeSentence = words.join(' ').trim()
-
           if (!wholeSentence) continue
 
           try {
@@ -434,15 +442,14 @@ export default {
 
       this.isProcessing = true
       this.showMessage('文章を保存中です...', 'info')
-
       try {
         const lessonsRef = collection(db, 'lessons')
         const q = query(lessonsRef, where("name", "==", this.fileName))
         const querySnapshot = await getDocs(q)
-
         const lessonData = {
           name: this.fileName,
           sentences: this.sentences,
+          delimiter: this.selectedDelimiter,
           analyzedSentences: this.analyzedSentences,
           wordColors: this.wordColors,
           createdAt: new Date().toISOString()
