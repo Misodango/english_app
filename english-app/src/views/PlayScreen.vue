@@ -31,10 +31,10 @@
                 </v-card-subtitle>
 
                 <v-chip-group v-model="selectedWords" column multiple class="word-container mb-6">
-                  <v-chip v-for="word in shuffledWords" :key="word" :value="word"
-                    :style="getChipStyle(word.trim(), currentIndex)" variant="elevated" size="x-large"
-                    class="play-preview-chip large-chip" :class="{ 'selected': selectedWords.includes(word) }">
-                    {{ word }}
+                  <v-chip v-for="item in shuffledWords" :key="item.id" :value="item.id"
+                    :style="getChipStyle(item.word, currentIndex)" variant="elevated" size="x-large"
+                    class="play-preview-chip large-chip" :class="{ 'selected': selectedWords.includes(item.id) }">
+                    {{ item.word }}
                   </v-chip>
                 </v-chip-group>
 
@@ -44,9 +44,9 @@
                     あなたの回答
                   </div>
                   <v-chip-group column multiple>
-                    <v-chip v-for="word in selectedWords" :key="word" :value="word"
-                      :style="getChipStyle(word.trim(), currentIndex)" variant="outlined" size="large">
-                      {{ word }}
+                    <v-chip v-for="id in selectedWords" :key="id" :value="id"
+                      :style="getChipStyle(idToWord(id).trim(), currentIndex)" variant="outlined" size="large">
+                      {{ idToWord(id) }}
                     </v-chip>
                   </v-chip-group>
                 </div>
@@ -188,7 +188,12 @@ export default {
     nextSentence() {
       if (this.sentences.length > 0) {
         this.currentSentence = this.sentences.pop()
-        this.shuffledWords = this.shuffleArray(this.currentSentence.split(this.delimiter))
+        const words = this.currentSentence.split(this.delimiter)
+        const wordsWithId = words.map((word, index) => ({
+          id: `${this.currentIndex}-${index}`,
+          word: word.trim()
+        }))
+        this.shuffledWords = this.shuffleArray(wordsWithId)
         this.selectedWords = []
         this.feedback = ''
         this.feedbackType = 'info'
@@ -196,6 +201,10 @@ export default {
       } else {
         this.endGame()
       }
+    },
+
+    idToWord(id) {
+      return this.shuffledWords.find(word => word.id === id)?.word || ''
     },
 
     endGame() {
@@ -230,7 +239,8 @@ export default {
 
     isCorrect() {
       const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
-      const userAnswer = this.selectedWords.join(' ')
+      const selectedIdToWords = this.selectedWords.map(id => this.idToWord(id).trim())
+      const userAnswer = selectedIdToWords.join(' ')
       return correctAnswer === userAnswer
     },
 
@@ -247,7 +257,8 @@ export default {
     },
     checkLength() {
       const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
-      const userAnswer = this.selectedWords.join(' ')
+      const selectedIdToWords = this.selectedWords.map(id => this.idToWord(id).trim())
+      const userAnswer = selectedIdToWords.join(' ')
       return (userAnswer.length == correctAnswer.length)
     },
 
