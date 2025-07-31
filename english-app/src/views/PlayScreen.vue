@@ -7,7 +7,7 @@
             <v-card-title class="text-h4 font-weight-bold text-center py-6">
               並び替えゲーム
               <div class="text-subtitle-1 mt-2 text-grey-darken-1">
-                {{ !gameStarted ? '単元を選択してゲームを始めましょう' : '文章を正しく並べ替えてください' }}
+                {{ !gameStarted ? '単元を選択してゲームを始めましょう' : gameEnded ? '終了です！' : '文章を正しく並べ替えてください' }}
               </div>
             </v-card-title>
 
@@ -25,7 +25,7 @@
               </div>
 
               <!-- ゲーム部分 -->
-              <div v-if="gameStarted && currentSentence" class="game-content">
+              <div v-if="gameStarted && currentSentence && !gameEnded" class="game-content">
                 <v-card-subtitle class="text-h6 mb-4">
                   のこり{{ sentences.length + 1 }}問
                 </v-card-subtitle>
@@ -72,11 +72,29 @@
               <!-- ゲーム終了部分 -->
               <div v-if="gameEnded" class="text-center">
                 <ConfettiExplosion />
+                <v-alert v-if="feedback" :type="feedbackType" variant="tonal" class="mb-4">
+                  {{ feedback }}
+                </v-alert>
+
+                <v-card-subtitle v-if="wrongQuestions.length > 0" class="text-h6 mb-4">
+                  間違えた問題
+                  <v-chip-group column multiple class="mt-2">
+                    <v-chip v-for="(question, index) in wrongQuestions" :key="index"
+                      class="play-preview-chip large-chip">
+                      {{ question }}
+                    </v-chip>
+                  </v-chip-group>
+                </v-card-subtitle>
                 <v-card-text class="pa-6">
+                  <v-btn v-if="wrongQuestions.length > 0" @click="restartWithWrongQuestions" color="primary" block class="start-btn py-6 text-body-1 font-weight-medium"
+                    elevation="2" rounded="lg">
+                    <v-icon icon="mdi-timer-play-outline" class="mr-2"></v-icon>
+                    間違えた問題だけプレイ
+                  </v-btn>
                   <v-btn @click="resetGame" color="primary" block class="start-btn py-6 text-body-1 font-weight-medium"
                     elevation="2" rounded="lg">
                     <v-icon icon="mdi-timer-play-outline" class="mr-2"></v-icon>
-                    もう一度プレイ
+                    最初からもう一度プレイ
                   </v-btn>
                   <v-divider></v-divider>
                   <v-btn @click="returnHome" color="primary" block class="start-btn py-6 text-body-1 font-weight-medium"
@@ -130,6 +148,7 @@ export default {
         other: '#E0E0E0'
       },
       correctCounts: 0,
+      wrongQuestions: [],
     }
   },
   components: {
@@ -223,6 +242,20 @@ export default {
       this.feedback = ''
       this.feedbackType = 'info'
       this.correctCounts = 0
+      this.wrongQuestions = []
+    },
+
+    restartWithWrongQuestions(){
+      this.startTime = Date.now()
+      this.gameStarted = true
+      this.gameEnded = false
+      this.elapsedTime = 0
+      this.feedback = ''
+      this.feedbackType = 'info'
+      this.correctCounts = 0
+      this.sentences = this.wrongQuestions
+      this.nextSentence()
+      this.wrongQuestions = []
     },
 
     returnHome() {
@@ -253,6 +286,10 @@ export default {
       } else {
         this.feedback = `😣残念．．．もう一度やってみよう！😣`
         this.feedbackType = 'error'
+        const connectedSentence = this.currentSentence.split(this.delimiter).join(' ')
+        if(!this.wrongQuestions.includes(connectedSentence)) {
+          this.wrongQuestions.push(connectedSentence)
+        }
       }
     },
     checkLength() {
