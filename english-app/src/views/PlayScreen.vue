@@ -92,7 +92,7 @@
                   <v-chip-group column multiple class="mt-2">
                     <v-chip v-for="(question, index) in wrongQuestions" :key="index"
                       class="play-preview-chip large-chip">
-                      {{ question }}
+                      {{ removeDelimiter(question) }}
                     </v-chip>
                   </v-chip-group>
                 </v-card-subtitle>
@@ -305,7 +305,7 @@ export default {
       } else {
         this.feedback = `😣残念．．．もう一度やってみよう！😣`
         this.feedbackType = 'error'
-        const connectedSentence = this.currentSentence.split(this.delimiter).join(' ')
+        const connectedSentence = this.currentSentence.split(this.delimiter).join(this.delimiter)
         if(!this.wrongQuestions.includes(connectedSentence)) {
           this.wrongQuestions.push(connectedSentence)
         }
@@ -321,6 +321,10 @@ export default {
     popString() {
       this.selectedWords.pop()
     },
+
+    removeDelimiter(sentenceWithDelimiter) {
+      return sentenceWithDelimiter.split(this.delimiter).map(word => word.trim()).join(' ')
+    }
   }
 }
 </script>
