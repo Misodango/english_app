@@ -36,14 +36,14 @@
               </div>
 
               <!-- ゲーム部分 -->
-              <div v-if="gameStarted && currentSentence && !gameEnded" class="game-content">
+              <div v-if="gameStarted && currentProblem && !gameEnded" class="game-content">
                 <v-card-subtitle class="text-h6 mb-4">
-                  のこり{{ sentences.length + 1 }}問
+                  のこり{{ gameProblems.length + 1 }}問
                 </v-card-subtitle>
 
                 <v-chip-group v-model="selectedWords" column multiple class="word-container mb-6">
                   <v-chip v-for="item in shuffledWords" :key="item.id" :value="item.id"
-                    :style="getChipStyle(item.word, currentIndex)" variant="elevated" size="x-large"
+                    :style="getChipStyle(item.word)" variant="elevated" size="x-large"
                     class="play-preview-chip large-chip" :class="{ 'selected': selectedWords.includes(item.id) }">
                     {{ item.word }}
                   </v-chip>
@@ -56,7 +56,7 @@
                   </div>
                   <v-chip-group column multiple>
                     <v-chip v-for="id in selectedWords" :key="id" :value="id"
-                      :style="getChipStyle(idToWord(id).trim(), currentIndex)" variant="outlined" size="large">
+                      :style="getChipStyle(idToWord(id).trim())" variant="outlined" size="large">
                       {{ idToWord(id) }}
                     </v-chip>
                   </v-chip-group>
@@ -67,7 +67,7 @@
                 </v-alert>
 
                 <div class="d-flex gap-4">
-                  <v-btn v-if="!gameEnded && currentSentence.length > 0" @click="popString" color="orange-darken-2"
+                  <v-btn v-if="!gameEnded && selectedWords.length > 0" @click="popString" color="orange-darken-2"
                     variant="tonal" class="flex-grow-1">
                     <v-icon icon="mdi-arrow-left" start></v-icon>
                     1つ戻る
@@ -92,7 +92,7 @@
                   <v-chip-group column multiple class="mt-2">
                     <v-chip v-for="(question, index) in wrongQuestions" :key="index"
                       class="play-preview-chip large-chip">
-                      {{ removeDelimiter(question) }}
+                      {{ removeDelimiter(question.sentence) }}
                     </v-chip>
                   </v-chip-group>
                 </v-card-subtitle>
@@ -138,11 +138,10 @@ export default {
     return {
       lessons: [],
       selectedLesson: null,
-      sentences: [],
+      originalProblems: [], // 元の問題データ（文章と色情報のペア）
+      gameProblems: [], // ゲーム用の問題データ
       delimiter: ',',
-      currentSentence: null,
-      currentIndex: 0,
-      wordColors: [],
+      currentProblem: null, // 現在の問題（文章と色情報のペア）
       shuffledWords: [],
       selectedWords: [],
       feedback: '',
@@ -171,8 +170,8 @@ export default {
     await this.loadLessons()
   },
   methods: {
-    getChipStyle(word, sentenceIndex) {
-      const backgroundColor = this.wordColors[sentenceIndex]?.[word] || this.colorScheme.other;
+    getChipStyle(word) {
+      const backgroundColor = this.currentProblem?.wordColors?.[word] || this.colorScheme.other;
       return {
         backgroundColor: backgroundColor,
         color: this.getContrastColor(backgroundColor),
@@ -205,10 +204,13 @@ export default {
     onLessonSelect() {
       const lesson = this.lessons.find(l => l.id === this.selectedLesson)
       if (lesson) {
-        this.sentences = [...lesson.sentences]
-        this.wordColors = [...lesson.wordColors]
+        // 文章と色情報をペアとして保存
+        this.originalProblems = lesson.sentences.map((sentence, index) => ({
+          sentence: sentence,
+          wordColors: lesson.wordColors[index] || {}
+        }))
         this.delimiter = lesson.delimiter === 'comma' ? ',' : ' '
-        this.currentProblemMaxNumber = this.sentences.length
+        this.currentProblemMaxNumber = this.originalProblems.length
       }
     },
 
@@ -217,24 +219,25 @@ export default {
       this.startTime = Date.now()
       this.gameEnded = false
       this.problemsNumber = this.problemsNumber || this.currentProblemMaxNumber
-      this.sentences = this.shuffleArray(this.sentences).slice(0, this.problemsNumber || this.currentProblemMaxNumber)
+
+      // 問題をシャッフルして指定数だけ選択
+      this.gameProblems = this.shuffleArray([...this.originalProblems]).slice(0, this.problemsNumber)
 
       this.nextSentence()
     },
 
     nextSentence() {
-      if (this.sentences.length > 0) {
-        this.currentSentence = this.sentences.pop()
-        const words = this.currentSentence.split(this.delimiter)
+      if (this.gameProblems.length > 0) {
+        this.currentProblem = this.gameProblems.pop()
+        const words = this.currentProblem.sentence.split(this.delimiter)
         const wordsWithId = words.map((word, index) => ({
-          id: `${this.currentIndex}-${index}`,
+          id: `${Date.now()}-${index}`, // より確実なユニークID
           word: word.trim()
         }))
         this.shuffledWords = this.shuffleArray(wordsWithId)
         this.selectedWords = []
         this.feedback = ''
         this.feedbackType = 'info'
-        this.currentIndex = this.sentences.length
       } else {
         this.endGame()
       }
@@ -256,7 +259,7 @@ export default {
       this.gameStarted = false
       this.gameEnded = false
       this.selectedLesson = null
-      this.currentSentence = null
+      this.currentProblem = null
       this.elapsedTime = 0
       this.feedback = ''
       this.feedbackType = 'info'
@@ -264,7 +267,7 @@ export default {
       this.wrongQuestions = []
     },
 
-    restartWithWrongQuestions(){
+    restartWithWrongQuestions() {
       this.startTime = Date.now()
       this.gameStarted = true
       this.gameEnded = false
@@ -272,7 +275,7 @@ export default {
       this.feedback = ''
       this.feedbackType = 'info'
       this.correctCounts = 0
-      this.sentences = this.wrongQuestions
+      this.gameProblems = [...this.wrongQuestions]
       this.nextSentence()
       this.wrongQuestions = []
     },
@@ -282,15 +285,16 @@ export default {
     },
 
     shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
+      const shuffled = [...array]
+      for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-          ;[array[i], array[j]] = [array[j], array[i]]
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
       }
-      return array
+      return shuffled
     },
 
     isCorrect() {
-      const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
+      const correctAnswer = this.currentProblem.sentence.split(this.delimiter).join(' ')
       const selectedIdToWords = this.selectedWords.map(id => this.idToWord(id).trim())
       const userAnswer = selectedIdToWords.join(' ')
       return correctAnswer === userAnswer
@@ -305,14 +309,16 @@ export default {
       } else {
         this.feedback = `😣残念．．．もう一度やってみよう！😣`
         this.feedbackType = 'error'
-        const connectedSentence = this.currentSentence.split(this.delimiter).join(this.delimiter)
-        if(!this.wrongQuestions.includes(connectedSentence)) {
-          this.wrongQuestions.push(connectedSentence)
+        // 間違えた問題を保存（問題オブジェクト全体を保存）
+        const existingWrong = this.wrongQuestions.find(q => q.sentence === this.currentProblem.sentence)
+        if (!existingWrong) {
+          this.wrongQuestions.push({...this.currentProblem})
         }
       }
     },
+
     checkLength() {
-      const correctAnswer = this.currentSentence.split(this.delimiter).join(' ')
+      const correctAnswer = this.currentProblem.sentence.split(this.delimiter).join(' ')
       const selectedIdToWords = this.selectedWords.map(id => this.idToWord(id).trim())
       const userAnswer = selectedIdToWords.join(' ')
       return (userAnswer.length == correctAnswer.length)
