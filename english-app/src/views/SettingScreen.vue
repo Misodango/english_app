@@ -12,7 +12,6 @@
         variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
     </div>
 
-
     <!-- コンマ区切りかスペース区切りを選択 -->
     <v-btn-toggle v-model="selectedDelimiter" class="mb-4" color="primary">
       <v-btn value="comma" variant="tonal" @change="handleFileUpload">コンマ区切り</v-btn>
@@ -97,12 +96,13 @@
       <v-card>
         <v-card-title>確認</v-card-title>
         <v-card-text>
-          「{{ fileName }}」を削除してもよろしいですか？
+          「{{ originalFileName || fileName }}」を削除してもよろしいですか？<br>
+          <small class="text-grey">この操作は取り消せません。</small>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="primary" variant="text" @click="deleteDialog = false">キャンセル</v-btn>
-          <v-btn color="error" variant="text" @click="removeData">削除する</v-btn>
+          <v-btn color="error" variant="text" @click="removeData" :loading="isProcessing">削除する</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -124,7 +124,7 @@
 
 <script>
 import { db } from '../firebase/init'
-import { collection, addDoc, query, getDocs, where, updateDoc, writeBatch } from 'firebase/firestore'
+import { collection, addDoc, query, getDocs, where, updateDoc, doc, deleteDoc } from 'firebase/firestore'
 import axios from 'axios'
 
 export default {
@@ -132,6 +132,8 @@ export default {
   data() {
     return {
       currentDataType: null,
+      selectedLessonId: null, // 選択されたレッスンのID
+      originalFileName: null, // 元のファイル名（更新時の識別用）
       lessons: [],
       selectedLesson: null,
       selectedDelimiter: 'comma', // デフォルトはコンマ区切り
@@ -187,15 +189,15 @@ export default {
     },
 
     resetForm() {
-      if (this.currentDataType) {
-        this.sentences = [];
-        this.wordColors = [];
-        this.fileName = '';
-        this.analyzedSentences = [];
-        this.currentDataType = null;
-        this.selectedLesson = null;
-        this.file = null;
-      }
+      this.sentences = [];
+      this.wordColors = [];
+      this.fileName = '';
+      this.originalFileName = null;
+      this.selectedLessonId = null;
+      this.analyzedSentences = [];
+      this.currentDataType = null;
+      this.selectedLesson = null;
+      this.file = null;
     },
 
     showDeleteConfirmation() {
@@ -211,8 +213,7 @@ export default {
           ...doc.data()
         }))
       } catch (error) {
-        this.feedback = '単元の読み込み中にエラーが発生しました'
-        this.feedbackType = 'error'
+        this.showMessage('単元の読み込み中にエラーが発生しました', 'error')
       }
     },
 
@@ -220,9 +221,13 @@ export default {
       const lesson = this.lessons.find(l => l.id === this.selectedLesson)
       this.currentDataType = 'lesson'
       if (lesson) {
+        this.selectedLessonId = lesson.id;
         this.sentences = [...lesson.sentences]
         this.wordColors = [...lesson.wordColors]
         this.fileName = lesson.name
+        this.originalFileName = lesson.name // 元の名前を保存
+        this.selectedDelimiter = lesson.delimiter || 'comma'
+        this.analyzedSentences = lesson.analyzedSentences || []
       }
     },
 
@@ -295,6 +300,8 @@ export default {
     handleFileUpload() {
       if (this.file) {
         this.currentDataType = 'file'
+        this.selectedLessonId = null; // ファイルアップロード時はIDをクリア
+        this.originalFileName = null;
         const reader = new FileReader()
         reader.onload = (e) => {
           const content = e.target.result
@@ -316,43 +323,58 @@ export default {
 
     removeSentence(index) {
       this.sentences.splice(index, 1)
+      // 対応する色情報も削除
+      if (this.wordColors[index]) {
+        this.wordColors.splice(index, 1)
+      }
+      if (this.analyzedSentences[index]) {
+        this.analyzedSentences.splice(index, 1)
+      }
     },
 
     async removeData() {
-      this.deleteDialog = false;
-      if (this.currentDataType !== 'lesson') return;
+      if (this.currentDataType !== 'lesson' || !this.selectedLessonId) {
+        this.showMessage('削除対象の単元が選択されていません。', 'error');
+        return;
+      }
 
-      const lessonsRef = collection(db, 'lessons');
-      const q = query(lessonsRef, where("name", "==", this.fileName));
-      this.showMessage(`データを削除中です...${this.fileName}`, 'info');
+      this.isProcessing = true;
+      this.deleteDialog = false;
+      this.showMessage(`データを削除中です...${this.originalFileName || this.fileName}`, 'info');
 
       try {
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          this.showMessage('指定された単元は存在しません。', 'error');
-          return;
-        }
-
-        const batch = writeBatch(db);
-        querySnapshot.forEach(doc => {
-          batch.delete(doc.ref);
-        });
-
-        await batch.commit();
+        // ドキュメントIDを使って直接削除
+        const docRef = doc(db, 'lessons', this.selectedLessonId);
+        await deleteDoc(docRef);
 
         // 成功ダイアログを表示
         this.successMessage = 'データが正常に削除されました。';
         this.successDialog = true;
-        this.showMessage('データが正常に削除されました。', true);
 
+        this.showMessage('データが正常に削除されました。', 'success');
         // レッスンリストを再読み込み
         await this.loadLessons();
 
       } catch (error) {
         console.error("削除中にエラー:", error);
         this.showMessage(`削除中にエラーが発生しました: ${error.message}`, 'error');
+      } finally {
+        this.isProcessing = false;
       }
+    },
+
+    // 名前の重複チェック
+    async checkNameConflict(newName) {
+      // 既存レッスンの更新の場合、自分自身は除外
+      if (this.currentDataType === 'lesson' && this.originalFileName === newName) {
+        return false; // 名前が変更されていない場合は競合なし
+      }
+
+      const lessonsRef = collection(db, 'lessons');
+      const q = query(lessonsRef, where("name", "==", newName));
+      const querySnapshot = await getDocs(q);
+
+      return !querySnapshot.empty;
     },
 
     validateSentence(sentence) {
@@ -431,49 +453,56 @@ export default {
 
     async saveSentences() {
       if (!this.isValidData) {
-        this.message = '単元名と少なくとも1つの有効な問題が必要です。'
-        this.messageType = 'error'
+        this.showMessage('単元名と少なくとも1つの有効な問題が必要です。', 'error')
         return
       }
 
       this.isProcessing = true
       this.showMessage('文章を保存中です...', 'info')
+
       try {
-        const lessonsRef = collection(db, 'lessons')
-        const q = query(lessonsRef, where("name", "==", this.fileName))
-        const querySnapshot = await getDocs(q)
+        // 名前の重複チェック
+        const hasConflict = await this.checkNameConflict(this.fileName);
+        if (hasConflict) {
+          this.showMessage('同じ名前の単元が既に存在します。別の名前を入力してください。', 'error');
+          return;
+        }
+
         const lessonData = {
           name: this.fileName,
           sentences: this.sentences,
           delimiter: this.selectedDelimiter,
           analyzedSentences: this.analyzedSentences,
           wordColors: this.wordColors,
-          createdAt: new Date().toISOString()
+          updatedAt: new Date().toISOString()
         }
 
-        if (querySnapshot.empty) {
-          await addDoc(lessonsRef, lessonData)
-          this.successMessage = '文章が正常に保存されました。';
-          this.showMessage('データが正常に保存されました。', true);
+        if (this.currentDataType === 'lesson' && this.selectedLessonId) {
+          // 既存レッスンの更新
+          const docRef = doc(db, 'lessons', this.selectedLessonId);
+          await updateDoc(docRef, lessonData);
+          this.successMessage = '単元が正常に更新されました。';
         } else {
-          const docRef = querySnapshot.docs[0].ref
-          await updateDoc(docRef, lessonData)
-          this.successMessage = '文章が正常に更新されました。';
-          this.showMessage('データが正常に削除されました。', true);
+          // 新規レッスンの作成
+          lessonData.createdAt = new Date().toISOString();
+          const lessonsRef = collection(db, 'lessons');
+          await addDoc(lessonsRef, lessonData);
+          this.successMessage = '単元が正常に保存されました。';
         }
 
         // 成功ダイアログを表示
         this.successDialog = true;
 
+        this.showMessage('文章が正常に保存されました。', 'success');
+
         // レッスンリストを再読み込み
         await this.loadLessons();
 
       } catch (error) {
-        this.message = '保存中にエラーが発生しました。'
-        this.showMessage('保存中にエラーが発生しました。', false);
-        this.messageType = 'error'
+        console.error("保存中にエラー:", error);
+        this.showMessage(`保存中にエラーが発生しました: ${error.message}`, 'error');
       } finally {
-        this.isProcessing = false
+        this.isProcessing = false;
       }
     },
 
