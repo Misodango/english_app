@@ -17,6 +17,17 @@
                 <v-select v-model="selectedLesson" :items="lessons" item-title="name" item-value="id" label="単元を選択"
                   variant="outlined" class="mb-4" @update:model-value="onLessonSelect"></v-select>
 
+                <v-text-field
+                  v-model="problemsNumber"
+                  type="number"
+                  label="問題数を入力してください"
+                  variant="outlined"
+                  v-model.number="problemsNumber"
+                  :min="1"
+                  :max="currentProblemMaxNumber"
+                />
+
+                <v-divider class="my-4" />
                 <v-btn v-if="selectedLesson" @click="startGame" color="primary" block
                   class="start-btn py-6 text-body-1 font-weight-medium" elevation="2" rounded="lg">
                   <v-icon start icon="mdi-timer-play-outline" class="mr-2"></v-icon>
@@ -149,6 +160,8 @@ export default {
       },
       correctCounts: 0,
       wrongQuestions: [],
+      problemsNumber: 1,
+      currentProblemMaxNumber: 0,
     }
   },
   components: {
@@ -195,12 +208,17 @@ export default {
         this.sentences = [...lesson.sentences]
         this.wordColors = [...lesson.wordColors]
         this.delimiter = lesson.delimiter === 'comma' ? ',' : ' '
+        this.currentProblemMaxNumber = this.sentences.length
       }
     },
 
     startGame() {
       this.gameStarted = true
       this.startTime = Date.now()
+      this.gameEnded = false
+      this.problemsNumber = this.problemsNumber || this.currentProblemMaxNumber
+      this.sentences = this.shuffleArray(this.sentences).slice(0, this.problemsNumber || this.currentProblemMaxNumber)
+
       this.nextSentence()
     },
 
@@ -231,6 +249,7 @@ export default {
       this.elapsedTime = Math.floor((Date.now() - this.startTime) / 1000)
       this.feedback = `すごい！${this.elapsedTime}秒で終了しました！`
       this.feedbackType = 'success'
+      this.problemsNumber = 1
     },
 
     resetGame() {
