@@ -24,6 +24,11 @@ yarn build
 yarn lint
 ```
 
+### Firestore seeding
+- Prepare service account JSON files for the source (prod) and target (staging) projects.
+- Run `yarn seed:copy -- --source path/to/prod-sa.json --target path/to/stg-sa.json --collection analyzedSentences --truncate` to copy documents.
+- Add `--dry-run` to inspect counts without writing, or `--merge` to keep existing target fields.
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 

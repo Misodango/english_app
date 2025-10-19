@@ -35,3 +35,10 @@
 
 - 本番は `english-app-pbl`、ステージングは `stg-english-app-pbl` の Firestore を利用する。環境ごとに `VUE_APP_FIREBASE_*` を切り替えればクライアント側で参照先が分かれる。
 - ローカルでステージング値を使いたい場合は `.env.staging` を用意し、`vue-cli-service build --mode staging` を利用するか、環境変数をシェル側でエクスポートする。
+
+### Firestore 初期データ
+
+- [ ] 本番 (`english-app-pbl`) の現在のデータを `firebase firestore:export` で Cloud Storage にバックアップ。
+- [ ] ステージング用に sanitize 済み JSON を準備し、`firebase firestore:import --project staging` で `stg-english-app-pbl` に読み込む。Nested な配列／マップを含む `analyzedSentences` なども export/import でそのまま維持できる。
+- [ ] 定期的な同期が必要なら、シードスクリプト（Node.js + TypeScript で `firebase-admin` を利用）を作成し、`VUE_APP_FIREBASE_PROJECT_ID` を切り替えて投入できるようにする。対象コレクション（例: `analyzedSentences`）を `get()` → `set()` するだけで配列やマップ構造を保ってコピー可能。
+- [x] TypeScript でシードを書く場合の雛形（`tools/seed.ts`）と実行手順（`yarn seed:copy -- --source <prod-sa.json> --target <stg-sa.json> --collection analyzedSentences --truncate`）を整備し、サービスアカウント JSON を CLI 引数で切り替えられるようにする。
