@@ -1,5 +1,18 @@
 {
   "projects": {
-    "default": "english-app-pbl"
+    "default": "english-app-pbl",
+    "production": "english-app-pbl"
+  },
+  "targets": {
+    "english-app-pbl": {
+      "hosting": {
+        "production": [
+          "english-app-pbl"
+        ],
+        "staging": [
+          "english-app-pbl-staging"
+        ]
+      }
+    }
   }
 }
