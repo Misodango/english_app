@@ -5,7 +5,10 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "deploy:staging": "yarn build && npx firebase-tools deploy --project staging --only hosting:staging",
+    "deploy:production": "yarn build && npx firebase-tools deploy --project production --only hosting:production",
+    "seed:copy": "ts-node --project tools/tsconfig.json tools/seed.ts"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
@@ -14,6 +17,7 @@
     "core-js": "^3.8.3",
     "cors": "^2.8.5",
     "firebase": "^11.0.1",
+    "firebase-tools": "^14.20.0",
     "framer-motion": "^11.11.8",
     "vue": "^3.2.13",
     "vue-axios": "^3.5.2",
@@ -27,8 +31,12 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "@types/node": "^20.16.5",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
+    "eslint-plugin-vue": "^8.0.3",
+    "firebase-admin": "^12.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
   },
   "eslintConfig": {
     "root": true,

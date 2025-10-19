@@ -21,8 +21,8 @@
                 単語クイズ(外部リンク🔗)
               </v-btn>
 
-              <v-btn @click="settings" variant="outlined" block class="settings-btn py-6 text-body-1 font-weight-medium"
-                elevation="0" rounded="lg">
+              <v-btn v-if="enableSettings" @click="settings" variant="outlined" block
+                class="settings-btn py-6 text-body-1 font-weight-medium" elevation="0" rounded="lg">
                 <v-icon start icon="mdi-cog-outline" class="mr-2"></v-icon>
                 設定
               </v-btn>
@@ -47,9 +47,15 @@
 
 <script>
 import PlayPreview from './PlayPreview'
+import { enableSettings } from '@/utils/featureFlags'
 
 export default {
   name: 'StartScreen',
+  data() {
+    return {
+      enableSettings
+    }
+  },
   methods: {
     startSortingGame() {
       this.$router.push('/play')
@@ -58,6 +64,7 @@ export default {
       window.location.href = 'https://english-picture-game.web.app/#/'
     },
     settings() {
+      if (!this.enableSettings) return
       this.$router.push('/settings')
     },
   },
