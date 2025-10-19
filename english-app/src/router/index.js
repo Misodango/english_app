@@ -6,6 +6,7 @@ import NotFoundScreen from "@/views/NotfoundScreen.vue";
 import WordQuizScreen from "@/views/WordQuiz.vue";
 import AuthScreen from "@/views/AuthScreen.vue";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { enableSettings } from "@/utils/featureFlags";
 
 const routes = [
 	{
@@ -24,12 +25,6 @@ const routes = [
 		component: AuthScreen,
 	},
 	{
-		path: "/settings",
-		name: "Settings",
-		component: SettingScreen,
-		meta: { requiresAuth: true }, // 修正: requiredAuth → requiresAuth に統一
-	},
-	{
 		path: "/wordQuiz",
 		name: "WordQuiz",
 		component: WordQuizScreen,
@@ -42,6 +37,15 @@ const routes = [
 
 	// 他のルートをここに追加していきます
 ];
+
+if (enableSettings) {
+	routes.splice(3, 0, {
+		path: "/settings",
+		name: "Settings",
+		component: SettingScreen,
+		meta: { requiresAuth: true }, // 修正: requiredAuth → requiresAuth に統一
+	});
+}
 
 const router = createRouter({
 	history: createWebHashHistory(),

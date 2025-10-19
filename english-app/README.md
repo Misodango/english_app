@@ -5,6 +5,10 @@
 yarn install
 ```
 
+### Environment variables
+- Copy `.env.example` to `.env` and fill in project-specific values.
+- Use `VUE_APP_ENABLE_SETTINGS` to toggle the `/settings` route (set to `false` for staging builds).
+
 ### Compiles and hot-reloads for development
 ```
 yarn serve

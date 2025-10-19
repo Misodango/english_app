@@ -15,8 +15,8 @@
               <v-icon start icon="mdi-home" class="mr-2"></v-icon>
               タイトルに戻る
             </v-btn>
-            <v-btn @click="settings" variant="outlined" block class="py-6 text-body-1 font-weight-medium" elevation="0"
-              rounded="lg">
+            <v-btn v-if="enableSettings" @click="settings" variant="outlined" block
+              class="py-6 text-body-1 font-weight-medium" elevation="0" rounded="lg">
               <v-icon start icon="mdi-cog-outline" class="mr-2"></v-icon>
               設定
             </v-btn>
@@ -28,13 +28,21 @@
 </template>
 
 <script>
+import { enableSettings } from '@/utils/featureFlags'
+
 export default {
   name: 'NotFoundScreen',
+  data() {
+    return {
+      enableSettings
+    }
+  },
   methods: {
     startLesson() {
       this.$router.push('/')
     },
     settings() {
+      if (!this.enableSettings) return
       this.$router.push('/settings')
     }
   }
