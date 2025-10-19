@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
+    env:
+      VUE_APP_ENABLE_SETTINGS: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
