@@ -6,8 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "deploy:staging": "yarn build && npx firebase-tools deploy --only hosting:staging",
-    "deploy:production": "yarn build && npx firebase-tools deploy --only hosting:production"
+    "deploy:staging": "yarn build && npx firebase-tools deploy --project staging --only hosting:staging",
+    "deploy:production": "yarn build && npx firebase-tools deploy --project production --only hosting:production"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
